@@ -24,12 +24,18 @@ export async function POST(request: NextRequest) {
     const orderId = `BT_${Date.now()}`;
 
     if (process.env.RESEND_API_KEY) {
-      await sendBankTransferInstructions({
+      const result = await sendBankTransferInstructions({
         customerEmail: email,
         customerName: shippingAddress?.fullName || "Customer",
         orderId,
         total: totalAmount,
       });
+
+      if (result.error) {
+        console.error("Email send failed:", result.error);
+      } else {
+        console.log("Bank transfer email sent to:", email);
+      }
     }
 
     return NextResponse.json({

@@ -5,6 +5,8 @@ import {
   useContext,
   useReducer,
   useEffect,
+  useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import type { Artwork, CartItem } from "@/types";
@@ -100,19 +102,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
     0
   );
 
-  const value: CartContextValue = {
-    ...state,
-    addItem: (artwork) => dispatch({ type: "ADD_ITEM", artwork }),
-    removeItem: (artworkId) => dispatch({ type: "REMOVE_ITEM", artworkId }),
-    clearCart: () => dispatch({ type: "CLEAR_CART" }),
-    toggleCart: () => dispatch({ type: "TOGGLE_CART" }),
-    openCart: () => dispatch({ type: "OPEN_CART" }),
-    closeCart: () => dispatch({ type: "CLOSE_CART" }),
-    totalItems,
-    totalPrice,
-    isInCart: (artworkId) =>
+  const addItem = useCallback(
+    (artwork: Artwork) => dispatch({ type: "ADD_ITEM", artwork }),
+    []
+  );
+  const removeItem = useCallback(
+    (artworkId: string) => dispatch({ type: "REMOVE_ITEM", artworkId }),
+    []
+  );
+  const clearCart = useCallback(() => dispatch({ type: "CLEAR_CART" }), []);
+  const toggleCart = useCallback(() => dispatch({ type: "TOGGLE_CART" }), []);
+  const openCart = useCallback(() => dispatch({ type: "OPEN_CART" }), []);
+  const closeCart = useCallback(() => dispatch({ type: "CLOSE_CART" }), []);
+  const isInCart = useCallback(
+    (artworkId: string) =>
       state.items.some((item) => item.artwork._id === artworkId),
-  };
+    [state.items]
+  );
+
+  const value = useMemo<CartContextValue>(
+    () => ({
+      ...state,
+      addItem,
+      removeItem,
+      clearCart,
+      toggleCart,
+      openCart,
+      closeCart,
+      totalItems,
+      totalPrice,
+      isInCart,
+    }),
+    [state, addItem, removeItem, clearCart, toggleCart, openCart, closeCart, totalItems, totalPrice, isInCart]
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

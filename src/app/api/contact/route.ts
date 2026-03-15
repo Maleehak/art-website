@@ -48,7 +48,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (process.env.RESEND_API_KEY) {
-      await sendContactNotification({ name, email, subject, message });
+      const result = await sendContactNotification({ name, email, subject, message });
+      if (result.error) {
+        console.error("Contact email failed:", result.error);
+      } else {
+        console.log("Contact email sent, ID:", result.data?.id);
+      }
     } else {
       console.log("Contact form submission (Resend not configured):", {
         name,

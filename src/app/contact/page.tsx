@@ -34,10 +34,10 @@ export default function ContactPage() {
                 <div>
                   <p className="text-sm font-medium text-soft-black">Email</p>
                   <a
-                    href="mailto:hello@artgallery.com"
+                    href="mailto:maleehakhalidart@gmail.com"
                     className="text-sm text-gallery-gray hover:text-accent transition-colors"
                   >
-                    hello@artgallery.com
+                    maleehakhalidart@gmail.com
                   </a>
                 </div>
               </div>
@@ -55,12 +55,12 @@ export default function ContactPage() {
                 <div>
                   <p className="text-sm font-medium text-soft-black">Social</p>
                   <a
-                    href="https://instagram.com"
+                    href="https://www.instagram.com/maleehakhalid_art/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-gallery-gray hover:text-accent transition-colors"
                   >
-                    @artgallery
+                    @maleehakhalid_art
                   </a>
                 </div>
               </div>
