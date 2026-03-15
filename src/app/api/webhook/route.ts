@@ -3,27 +3,26 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const { getStripe } = await import("@/lib/stripe");
-  const Stripe = (await import("stripe")).default;
+  const { verifyWebhookSignature } = await import("@/lib/xpay");
 
   const body = await request.text();
-  const signature = request.headers.get("stripe-signature");
+  const signature = request.headers.get("xpay-signature");
 
   if (!signature) {
     return NextResponse.json(
-      { error: "Missing stripe-signature header" },
+      { error: "Missing xpay-signature header" },
       { status: 400 }
     );
   }
 
-  let event: import("stripe").Stripe.Event;
-
   try {
-    event = getStripe().webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET || ""
-    );
+    const isValid = verifyWebhookSignature(body, signature);
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 400 }
+      );
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Webhook signature verification failed:", message);
@@ -33,32 +32,55 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object;
-      console.log("Payment successful for session:", session.id);
+  const event = JSON.parse(body) as {
+    eventId: string;
+    eventType: string;
+    eventTime: number;
+    intentId: string;
+    receiptId?: string;
+    status: string;
+    amount: number;
+    currency: string;
+    paymentMethod?: string;
+    customerDetails?: {
+      name: string;
+      email: string;
+      contactNumber?: string;
+    };
+    errorCode?: string;
+    metadata?: Record<string, string>;
+  };
 
-      // 1. Create order in Supabase
-      // const { artworkIds, shippingAddress } = session.metadata || {};
+  switch (event.eventType) {
+    case "intent.success": {
+      console.log("Payment successful:", event.intentId);
+
+      // TODO: 1. Create order in Supabase
+      // const { artworkIds, shippingAddress } = event.metadata || {};
       // await createOrder({ ... });
 
-      // 2. Update artwork status to "sold" in Sanity
-      // const ids = session.metadata?.artworkIds?.split(",") || [];
+      // TODO: 2. Update artwork status to "sold" in Sanity
+      // const ids = event.metadata?.artworkIds?.split(",") || [];
       // for (const id of ids) { await updateArtworkStatus(id, "sold"); }
 
-      // 3. Send confirmation email via Resend
-      // await sendOrderConfirmation(session.customer_email, session.id);
+      // TODO: 3. Send confirmation email via Resend
+      // await sendOrderConfirmation(event.customerDetails?.email, event.intentId);
 
       break;
     }
 
-    case "payment_intent.payment_failed": {
-      console.error("Payment failed:", event.data.object.id);
+    case "intent.failed": {
+      console.error(
+        "Payment failed:",
+        event.intentId,
+        "Error:",
+        event.errorCode
+      );
       break;
     }
 
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      console.log(`Unhandled event type: ${event.eventType}`);
   }
 
   return NextResponse.json({ received: true });

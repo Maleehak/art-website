@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const { getStripe, formatAmountForStripe } = await import("@/lib/stripe");
+  const {
+    createPaymentIntent,
+    formatAmountForXPay,
+    getCountryCode,
+  } = await import("@/lib/xpay");
 
   try {
     const body = await request.json();
@@ -16,54 +20,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const lineItems = items.map(
-      (item: { title: string; price: number; quantity: number }) => ({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: item.title,
-            description: "Original Painting",
-          },
-          unit_amount: formatAmountForStripe(item.price),
-        },
-        quantity: item.quantity,
-      })
+    const totalAmount = items.reduce(
+      (sum: number, item: { price: number; quantity: number }) =>
+        sum + item.price * item.quantity,
+      0
     );
 
-    const stripe = getStripe();
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      customer_email: email,
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            type: "fixed_amount",
-            fixed_amount: { amount: 0, currency: "usd" },
-            display_name: "Free Shipping",
-            delivery_estimate: {
-              minimum: { unit: "business_day", value: 5 },
-              maximum: { unit: "business_day", value: 10 },
-            },
-          },
+    const description = items
+      .map((item: { title: string }) => item.title)
+      .join(", ");
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    const intent = await createPaymentIntent({
+      amount: formatAmountForXPay(totalAmount),
+      currency: "USD",
+      callbackUrl: `${siteUrl}/checkout/success`,
+      cancelUrl: `${siteUrl}/cart`,
+      receiptId: `order_${Date.now()}`,
+      description: `Art Purchase: ${description}`,
+      customerDetails: {
+        name: shippingAddress?.fullName || "Customer",
+        email,
+        contactNumber: shippingAddress?.phone,
+        customerAddress: {
+          line1: shippingAddress?.addressLine1,
+          line2: shippingAddress?.addressLine2,
+          city: shippingAddress?.city,
+          state: shippingAddress?.state,
+          country: getCountryCode(shippingAddress?.country || "Pakistan"),
+          postalCode: shippingAddress?.postalCode,
         },
-      ],
+      },
+      paymentMethods: ["CARD", "GOOGLE_PAY"],
       metadata: {
         artworkIds: items
           .map((i: { artworkId: string }) => i.artworkId)
           .join(","),
         shippingAddress: JSON.stringify(shippingAddress),
       },
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cart`,
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({
+      url: intent.fwdUrl,
+      intentId: intent.xIntentId,
+    });
   } catch (error) {
-    console.error("Stripe checkout error:", error);
+    console.error("XPay checkout error:", error);
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      { error: "Failed to create payment session" },
       { status: 500 }
     );
   }

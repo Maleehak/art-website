@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Lock, CreditCard, Banknote } from "lucide-react";
+import { ArrowLeft, Lock, CreditCard, Smartphone, Building2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { PlaceholderImage } from "@/components/PlaceholderImage";
 import type { ShippingAddress } from "@/types";
 
-type PaymentMethod = "stripe" | "jazzcash" | "easypaisa" | "bank_transfer";
+type PaymentMethod = "card" | "jazzcash" | "easypaisa" | "bank_transfer";
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice } = useCart();
   const { format } = useCurrency();
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [isProcessing, setIsProcessing] = useState(false);
   const [address, setAddress] = useState<ShippingAddress>({
     fullName: "",
@@ -51,7 +51,7 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      if (paymentMethod === "stripe") {
+      if (paymentMethod === "card") {
         const res = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -72,10 +72,16 @@ export default function CheckoutPage() {
           window.location.href = data.url;
           return;
         }
-      } else {
-        // Local payment methods - show bank details / redirect
+        if (data.error) {
+          alert(data.error);
+        }
+      } else if (paymentMethod === "bank_transfer") {
         alert(
-          `${paymentMethod.toUpperCase()} payment integration coming soon. Please use card payment or contact us directly.`
+          "Bank transfer details will be sent to your email. Please complete the transfer within 48 hours to confirm your order."
+        );
+      } else {
+        alert(
+          `${paymentMethod === "jazzcash" ? "JazzCash" : "EasyPaisa"} integration coming soon. Please use card payment or bank transfer.`
         );
       }
     } catch (error) {
@@ -86,12 +92,45 @@ export default function CheckoutPage() {
     }
   }
 
-  const paymentMethods: { id: PaymentMethod; label: string; icon: React.ReactNode }[] = [
-    { id: "stripe", label: "Credit / Debit Card", icon: <CreditCard className="h-5 w-5" /> },
-    { id: "jazzcash", label: "JazzCash", icon: <Banknote className="h-5 w-5" /> },
-    { id: "easypaisa", label: "EasyPaisa", icon: <Banknote className="h-5 w-5" /> },
-    { id: "bank_transfer", label: "Bank Transfer", icon: <Banknote className="h-5 w-5" /> },
+  const paymentMethods: {
+    id: PaymentMethod;
+    label: string;
+    description: string;
+    icon: React.ReactNode;
+    available: boolean;
+  }[] = [
+    {
+      id: "card",
+      label: "Credit / Debit Card",
+      description: "Visa, Mastercard, Google Pay",
+      icon: <CreditCard className="h-5 w-5" />,
+      available: true,
+    },
+    {
+      id: "jazzcash",
+      label: "JazzCash",
+      description: "Pay via JazzCash wallet",
+      icon: <Smartphone className="h-5 w-5" />,
+      available: false,
+    },
+    {
+      id: "easypaisa",
+      label: "EasyPaisa",
+      description: "Pay via EasyPaisa wallet",
+      icon: <Smartphone className="h-5 w-5" />,
+      available: false,
+    },
+    {
+      id: "bank_transfer",
+      label: "Bank Transfer",
+      description: "Direct bank deposit",
+      icon: <Building2 className="h-5 w-5" />,
+      available: true,
+    },
   ];
+
+  const inputClass =
+    "w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors";
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
@@ -122,7 +161,7 @@ export default function CheckoutPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address"
-                className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                className={inputClass}
               />
             </section>
 
@@ -140,7 +179,7 @@ export default function CheckoutPage() {
                     setAddress({ ...address, fullName: e.target.value })
                   }
                   placeholder="Full name"
-                  className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  className={inputClass}
                 />
                 <input
                   type="text"
@@ -150,7 +189,7 @@ export default function CheckoutPage() {
                     setAddress({ ...address, addressLine1: e.target.value })
                   }
                   placeholder="Address line 1"
-                  className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  className={inputClass}
                 />
                 <input
                   type="text"
@@ -159,7 +198,7 @@ export default function CheckoutPage() {
                     setAddress({ ...address, addressLine2: e.target.value })
                   }
                   placeholder="Address line 2 (optional)"
-                  className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  className={inputClass}
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <input
@@ -170,7 +209,7 @@ export default function CheckoutPage() {
                       setAddress({ ...address, city: e.target.value })
                     }
                     placeholder="City"
-                    className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                    className={inputClass}
                   />
                   <input
                     type="text"
@@ -180,7 +219,7 @@ export default function CheckoutPage() {
                       setAddress({ ...address, state: e.target.value })
                     }
                     placeholder="State / Province"
-                    className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                    className={inputClass}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -192,14 +231,14 @@ export default function CheckoutPage() {
                       setAddress({ ...address, postalCode: e.target.value })
                     }
                     placeholder="Postal code"
-                    className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                    className={inputClass}
                   />
                   <select
                     value={address.country}
                     onChange={(e) =>
                       setAddress({ ...address, country: e.target.value })
                     }
-                    className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                    className={inputClass}
                   >
                     <option value="Pakistan">Pakistan</option>
                     <option value="United States">United States</option>
@@ -218,8 +257,8 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setAddress({ ...address, phone: e.target.value })
                   }
-                  placeholder="Phone number"
-                  className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  placeholder="Phone number (e.g. +92 300 1234567)"
+                  className={inputClass}
                 />
               </div>
             </section>
@@ -234,15 +273,29 @@ export default function CheckoutPage() {
                   <button
                     key={method.id}
                     type="button"
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`flex items-center gap-3 rounded-lg border p-4 text-sm transition-colors ${
-                      paymentMethod === method.id
+                    onClick={() => method.available && setPaymentMethod(method.id)}
+                    className={`relative flex items-center gap-3 rounded-lg border p-4 text-left transition-colors ${
+                      !method.available
+                        ? "border-warm-white text-gallery-gray/50 cursor-not-allowed"
+                        : paymentMethod === method.id
                         ? "border-accent bg-accent/5 text-soft-black"
                         : "border-warm-white text-gallery-gray hover:border-accent/50"
                     }`}
                   >
                     {method.icon}
-                    {method.label}
+                    <div>
+                      <span className="text-sm font-medium block">
+                        {method.label}
+                      </span>
+                      <span className="text-xs text-gallery-gray">
+                        {method.description}
+                      </span>
+                    </div>
+                    {!method.available && (
+                      <span className="absolute top-2 right-2 text-[10px] bg-warm-white text-gallery-gray px-1.5 py-0.5 rounded-full">
+                        Soon
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -307,8 +360,8 @@ export default function CheckoutPage() {
               </button>
 
               <p className="text-xs text-gallery-gray text-center">
-                Your payment is processed securely. Card details never touch our
-                servers.
+                Payments processed securely by XPay. Card details never touch
+                our servers.
               </p>
             </div>
           </div>

@@ -1,16 +1,84 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
 export default function CheckoutSuccessPage() {
   const { clearCart } = useCart();
+  const searchParams = useSearchParams();
+  const intentId = searchParams.get("xpay_intent_id");
+  const [status, setStatus] = useState<"loading" | "success" | "failed">(
+    "loading"
+  );
 
   useEffect(() => {
-    clearCart();
-  }, [clearCart]);
+    if (!intentId) {
+      clearCart();
+      setStatus("success");
+      return;
+    }
+
+    async function checkStatus() {
+      try {
+        const res = await fetch(
+          `/api/payment-status?xpay_intent_id=${intentId}`
+        );
+        const data = await res.json();
+        if (data.status === "SUCCESS") {
+          clearCart();
+          setStatus("success");
+        } else if (data.status === "FAILED") {
+          setStatus("failed");
+        } else {
+          clearCart();
+          setStatus("success");
+        }
+      } catch {
+        clearCart();
+        setStatus("success");
+      }
+    }
+
+    checkStatus();
+  }, [intentId, clearCart]);
+
+  if (status === "loading") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-24 text-center">
+        <Loader2 className="h-16 w-16 text-accent mx-auto mb-6 animate-spin" />
+        <h1 className="font-serif text-3xl font-bold text-soft-black mb-4">
+          Confirming Your Payment...
+        </h1>
+        <p className="text-gallery-gray">
+          Please wait while we verify your payment.
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-24 text-center">
+        <XCircle className="h-16 w-16 text-error mx-auto mb-6" />
+        <h1 className="font-serif text-3xl font-bold text-soft-black mb-4">
+          Payment Failed
+        </h1>
+        <p className="text-lg text-gallery-gray mb-8">
+          Unfortunately, your payment could not be processed. Please try again
+          or use a different payment method.
+        </p>
+        <Link
+          href="/checkout"
+          className="inline-flex items-center gap-2 rounded-lg bg-soft-black text-white px-8 py-3.5 text-sm font-semibold hover:bg-charcoal transition-colors"
+        >
+          Try Again
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-24 text-center">
@@ -48,7 +116,8 @@ export default function CheckoutSuccessPage() {
             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">
               3
             </span>
-            Shipped with tracking — you&apos;ll get an email with the tracking number
+            Shipped with tracking — you&apos;ll get an email with the tracking
+            number
           </li>
           <li className="flex gap-3">
             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">

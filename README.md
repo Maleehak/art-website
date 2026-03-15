@@ -1,13 +1,13 @@
 # Art Gallery — E-Commerce Website
 
-A high-performance art e-commerce website built with Next.js 15, featuring static generation for near-instant page loads, Sanity CMS for content management, and Stripe for secure payments.
+A high-performance art e-commerce website built with Next.js 15, featuring static generation for near-instant page loads, Sanity CMS for content management, and XPay Global for secure payments (designed for Pakistan).
 
 ## Tech Stack
 
 - **Framework**: Next.js 15 (App Router) + TypeScript
 - **Styling**: Tailwind CSS 4 + Framer Motion
 - **CMS**: Sanity.io (headless)
-- **Payments**: Stripe (international) + JazzCash/EasyPaisa (PKR)
+- **Payments**: XPay Global (cards, Google Pay) + JazzCash/EasyPaisa (coming soon)
 - **Database**: Supabase (Postgres)
 - **Email**: Resend
 - **Hosting**: Vercel
@@ -65,7 +65,7 @@ art-website/
 │   │   ├── commission/       # Commission request
 │   │   ├── wishlist/         # Saved favorites
 │   │   ├── admin/            # Order dashboard
-│   │   └── api/              # API routes (Stripe, contact)
+│   │   └── api/              # API routes (XPay, contact, webhook)
 │   ├── components/           # Reusable UI components
 │   ├── context/              # React Context (Cart, Currency)
 │   ├── lib/                  # Utilities + service clients
@@ -79,7 +79,7 @@ art-website/
 - **Gallery & Collections**: Organized artwork browsing with categories
 - **Artwork Detail**: Image zoom, full details, add to cart
 - **Shopping Cart**: Persistent cart with drawer and full page view
-- **Secure Checkout**: Stripe integration, multiple payment methods
+- **Secure Checkout**: XPay Global integration, cards + Google Pay
 - **Multi-Currency**: USD, PKR, EUR, GBP display toggle
 - **Wishlist**: Save favorites with localStorage
 - **Blog/Journal**: Studio updates and process insights
@@ -96,11 +96,13 @@ art-website/
 2. Add your project ID and dataset to `.env.local`
 3. Deploy the schemas from `sanity/schemas/`
 
-### Stripe
+### XPay Global (Payments)
 
-1. Create an account at [stripe.com](https://stripe.com)
-2. Add your API keys to `.env.local`
-3. Set up a webhook endpoint pointing to `/api/webhook`
+1. Sign up at [xpay.postexglobal.com](https://xpay.postexglobal.com)
+2. Get your Public Key and Private Key from Settings → API Keys
+3. Add them to `.env.local` as `XPAY_PUBLIC_KEY` and `XPAY_PRIVATE_KEY`
+4. Set up a webhook in the XPay dashboard pointing to `/api/webhook`
+5. Use `XPAY_ENVIRONMENT=sandbox` for testing, `production` for live
 
 ### Supabase
 
