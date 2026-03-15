@@ -1,0 +1,208 @@
+import { createClient } from "@sanity/client";
+import imageUrlBuilder from "@sanity/image-url";
+import type { SanityImage, Artwork, Collection, Artist, BlogPost } from "@/types";
+
+export const sanityClient = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+  useCdn: true,
+  apiVersion: "2024-01-01",
+  token: process.env.SANITY_API_TOKEN,
+});
+
+const builder = imageUrlBuilder(sanityClient);
+
+export function urlFor(source: SanityImage) {
+  return builder.image(source);
+}
+
+export async function getCollections(): Promise<Collection[]> {
+  return sanityClient.fetch(`
+    *[_type == "collection"] | order(order asc) {
+      _id,
+      title,
+      "slug": slug.current,
+      description,
+      image,
+      "artworkCount": count(*[_type == "artwork" && references(^._id)])
+    }
+  `);
+}
+
+export async function getCollection(slug: string): Promise<Collection | null> {
+  return sanityClient.fetch(
+    `
+    *[_type == "collection" && slug.current == $slug][0] {
+      _id,
+      title,
+      "slug": slug.current,
+      description,
+      image,
+      "artworkCount": count(*[_type == "artwork" && references(^._id)])
+    }
+  `,
+    { slug }
+  );
+}
+
+export async function getArtworksByCollection(
+  collectionSlug: string
+): Promise<Artwork[]> {
+  return sanityClient.fetch(
+    `
+    *[_type == "artwork" && collection->slug.current == $slug] | order(_createdAt desc) {
+      _id,
+      title,
+      "slug": slug.current,
+      description,
+      medium,
+      dimensions,
+      year,
+      price,
+      currency,
+      status,
+      image,
+      images,
+      featured,
+      collection->{
+        _id,
+        title,
+        "slug": slug.current
+      }
+    }
+  `,
+    { slug: collectionSlug }
+  );
+}
+
+export async function getArtwork(slug: string): Promise<Artwork | null> {
+  return sanityClient.fetch(
+    `
+    *[_type == "artwork" && slug.current == $slug][0] {
+      _id,
+      title,
+      "slug": slug.current,
+      description,
+      medium,
+      dimensions,
+      year,
+      price,
+      currency,
+      status,
+      image,
+      images,
+      featured,
+      collection->{
+        _id,
+        title,
+        "slug": slug.current
+      }
+    }
+  `,
+    { slug }
+  );
+}
+
+export async function getFeaturedArtworks(): Promise<Artwork[]> {
+  return sanityClient.fetch(`
+    *[_type == "artwork" && featured == true] | order(_createdAt desc)[0...8] {
+      _id,
+      title,
+      "slug": slug.current,
+      description,
+      medium,
+      dimensions,
+      year,
+      price,
+      currency,
+      status,
+      image,
+      featured,
+      collection->{
+        _id,
+        title,
+        "slug": slug.current
+      }
+    }
+  `);
+}
+
+export async function getAllArtworks(): Promise<Artwork[]> {
+  return sanityClient.fetch(`
+    *[_type == "artwork"] | order(_createdAt desc) {
+      _id,
+      title,
+      "slug": slug.current,
+      description,
+      medium,
+      dimensions,
+      year,
+      price,
+      currency,
+      status,
+      image,
+      featured,
+      collection->{
+        _id,
+        title,
+        "slug": slug.current
+      }
+    }
+  `);
+}
+
+export async function getArtist(): Promise<Artist | null> {
+  return sanityClient.fetch(`
+    *[_type == "artist"][0] {
+      name,
+      bio,
+      statement,
+      photo,
+      studioPhotos,
+      socialLinks
+    }
+  `);
+}
+
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  return sanityClient.fetch(`
+    *[_type == "blogPost"] | order(publishedAt desc) {
+      _id,
+      title,
+      "slug": slug.current,
+      excerpt,
+      body,
+      coverImage,
+      publishedAt,
+      tags
+    }
+  `);
+}
+
+export async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  return sanityClient.fetch(
+    `
+    *[_type == "blogPost" && slug.current == $slug][0] {
+      _id,
+      title,
+      "slug": slug.current,
+      excerpt,
+      body,
+      coverImage,
+      publishedAt,
+      tags
+    }
+  `,
+    { slug }
+  );
+}
+
+export async function updateArtworkStatus(
+  artworkId: string,
+  status: "available" | "sold" | "reserved"
+) {
+  return sanityClient
+    .patch(artworkId)
+    .set({ status })
+    .commit();
+}
