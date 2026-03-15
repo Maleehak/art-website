@@ -1,0 +1,319 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowLeft, Lock, CreditCard, Banknote } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
+import { PlaceholderImage } from "@/components/PlaceholderImage";
+import type { ShippingAddress } from "@/types";
+
+type PaymentMethod = "stripe" | "jazzcash" | "easypaisa" | "bank_transfer";
+
+export default function CheckoutPage() {
+  const { items, totalPrice, clearCart } = useCart();
+  const { format } = useCurrency();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [address, setAddress] = useState<ShippingAddress>({
+    fullName: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "Pakistan",
+    phone: "",
+  });
+  const [email, setEmail] = useState("");
+
+  if (items.length === 0) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-24 text-center">
+        <h1 className="font-serif text-3xl font-bold text-soft-black mb-3">
+          No Items to Checkout
+        </h1>
+        <p className="text-gallery-gray mb-8">
+          Add some artworks to your cart first.
+        </p>
+        <Link
+          href="/collections"
+          className="inline-flex items-center gap-2 rounded-lg bg-soft-black text-white px-8 py-3.5 text-sm font-semibold hover:bg-charcoal transition-colors"
+        >
+          Browse Collections
+        </Link>
+      </div>
+    );
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setIsProcessing(true);
+
+    try {
+      if (paymentMethod === "stripe") {
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: items.map((item) => ({
+              artworkId: item.artwork._id,
+              title: item.artwork.title,
+              price: item.artwork.price,
+              quantity: item.quantity,
+            })),
+            email,
+            shippingAddress: address,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      } else {
+        // Local payment methods - show bank details / redirect
+        alert(
+          `${paymentMethod.toUpperCase()} payment integration coming soon. Please use card payment or contact us directly.`
+        );
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  const paymentMethods: { id: PaymentMethod; label: string; icon: React.ReactNode }[] = [
+    { id: "stripe", label: "Credit / Debit Card", icon: <CreditCard className="h-5 w-5" /> },
+    { id: "jazzcash", label: "JazzCash", icon: <Banknote className="h-5 w-5" /> },
+    { id: "easypaisa", label: "EasyPaisa", icon: <Banknote className="h-5 w-5" /> },
+    { id: "bank_transfer", label: "Bank Transfer", icon: <Banknote className="h-5 w-5" /> },
+  ];
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <Link
+        href="/cart"
+        className="inline-flex items-center gap-2 text-sm text-gallery-gray hover:text-soft-black transition-colors mb-8"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Cart
+      </Link>
+
+      <h1 className="font-serif text-3xl font-bold text-soft-black mb-10">
+        Checkout
+      </h1>
+
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+          {/* Left - Forms */}
+          <div className="lg:col-span-3 space-y-10">
+            {/* Contact */}
+            <section>
+              <h2 className="text-sm font-semibold text-soft-black uppercase tracking-wider mb-4">
+                Contact Information
+              </h2>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email address"
+                className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+              />
+            </section>
+
+            {/* Shipping */}
+            <section>
+              <h2 className="text-sm font-semibold text-soft-black uppercase tracking-wider mb-4">
+                Shipping Address
+              </h2>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  required
+                  value={address.fullName}
+                  onChange={(e) =>
+                    setAddress({ ...address, fullName: e.target.value })
+                  }
+                  placeholder="Full name"
+                  className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                />
+                <input
+                  type="text"
+                  required
+                  value={address.addressLine1}
+                  onChange={(e) =>
+                    setAddress({ ...address, addressLine1: e.target.value })
+                  }
+                  placeholder="Address line 1"
+                  className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                />
+                <input
+                  type="text"
+                  value={address.addressLine2}
+                  onChange={(e) =>
+                    setAddress({ ...address, addressLine2: e.target.value })
+                  }
+                  placeholder="Address line 2 (optional)"
+                  className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    required
+                    value={address.city}
+                    onChange={(e) =>
+                      setAddress({ ...address, city: e.target.value })
+                    }
+                    placeholder="City"
+                    className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={address.state}
+                    onChange={(e) =>
+                      setAddress({ ...address, state: e.target.value })
+                    }
+                    placeholder="State / Province"
+                    className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    required
+                    value={address.postalCode}
+                    onChange={(e) =>
+                      setAddress({ ...address, postalCode: e.target.value })
+                    }
+                    placeholder="Postal code"
+                    className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  />
+                  <select
+                    value={address.country}
+                    onChange={(e) =>
+                      setAddress({ ...address, country: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  >
+                    <option value="Pakistan">Pakistan</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="United Arab Emirates">UAE</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Germany">Germany</option>
+                    <option value="France">France</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <input
+                  type="tel"
+                  required
+                  value={address.phone}
+                  onChange={(e) =>
+                    setAddress({ ...address, phone: e.target.value })
+                  }
+                  placeholder="Phone number"
+                  className="w-full rounded-lg border border-warm-white bg-white px-4 py-3 text-sm text-soft-black placeholder:text-gallery-gray/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                />
+              </div>
+            </section>
+
+            {/* Payment Method */}
+            <section>
+              <h2 className="text-sm font-semibold text-soft-black uppercase tracking-wider mb-4">
+                Payment Method
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setPaymentMethod(method.id)}
+                    className={`flex items-center gap-3 rounded-lg border p-4 text-sm transition-colors ${
+                      paymentMethod === method.id
+                        ? "border-accent bg-accent/5 text-soft-black"
+                        : "border-warm-white text-gallery-gray hover:border-accent/50"
+                    }`}
+                  >
+                    {method.icon}
+                    {method.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Right - Order Summary */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-24 bg-warm-white rounded-xl p-6 space-y-6">
+              <h2 className="text-sm font-semibold text-soft-black uppercase tracking-wider">
+                Order Summary
+              </h2>
+
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div key={item.artwork._id} className="flex gap-3">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
+                      <PlaceholderImage
+                        title={item.artwork.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-soft-black truncate">
+                        {item.artwork.title}
+                      </p>
+                      <p className="text-xs text-gallery-gray">
+                        {item.artwork.medium}
+                      </p>
+                    </div>
+                    <p className="text-sm font-medium text-soft-black">
+                      {format(item.artwork.price)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-cream">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gallery-gray">Subtotal</span>
+                  <span className="text-soft-black">{format(totalPrice)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gallery-gray">Shipping</span>
+                  <span className="text-gallery-gray">
+                    {totalPrice >= 500 ? "Free" : "Calculated next"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-lg font-bold pt-3 border-t border-cream">
+                  <span className="text-soft-black">Total</span>
+                  <span className="text-soft-black">{format(totalPrice)}</span>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-soft-black py-3.5 text-sm font-semibold text-white hover:bg-charcoal disabled:opacity-50 transition-colors"
+              >
+                <Lock className="h-4 w-4" />
+                {isProcessing ? "Processing..." : "Place Order"}
+              </button>
+
+              <p className="text-xs text-gallery-gray text-center">
+                Your payment is processed securely. Card details never touch our
+                servers.
+              </p>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
