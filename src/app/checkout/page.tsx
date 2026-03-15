@@ -15,7 +15,7 @@ type PaymentMethod = "card" | "jazzcash" | "easypaisa" | "bank_transfer";
 export default function CheckoutPage() {
   const { items, totalPrice } = useCart();
   const { format } = useCurrency();
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer");
   const [isProcessing, setIsProcessing] = useState(false);
   const [address, setAddress] = useState<ShippingAddress>({
     fullName: "",
@@ -165,18 +165,18 @@ export default function CheckoutPage() {
     available: boolean;
   }[] = [
     {
-      id: "card",
-      label: "Credit / Debit Card",
-      description: "Visa, Mastercard, Google Pay",
-      icon: <CreditCard className="h-5 w-5" />,
-      available: true,
-    },
-    {
       id: "bank_transfer",
       label: "Bank Transfer",
       description: "Direct bank deposit",
       icon: <Building2 className="h-5 w-5" />,
       available: true,
+    },
+    {
+      id: "card",
+      label: "Credit / Debit Card",
+      description: "Visa, Mastercard, Google Pay",
+      icon: <CreditCard className="h-5 w-5" />,
+      available: false,
     },
     {
       id: "easypaisa",
