@@ -40,10 +40,7 @@ yarn-error.log*
 /.sanity
 
 # utility scripts (one-off maintenance)
-/scripts/fix-duplicate.mjs
-/scripts/cleanup-drafts.mjs
-/scripts/update-prices.mjs
-/scripts/reset-reserved.mjs
+/scripts/
 
 # typescript
 *.tsbuildinfo
