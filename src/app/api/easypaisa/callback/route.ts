@@ -32,8 +32,7 @@ export async function POST(request: NextRequest) {
         callbackData.orderRefNumber
       );
 
-      // TODO: 1. Create order in Supabase
-      // TODO: 2. Update artwork status to "sold" in Sanity
+      // TODO: Update artwork status to "sold" in Sanity
       // TODO: 3. Send confirmation email via Resend
 
       return NextResponse.redirect(
