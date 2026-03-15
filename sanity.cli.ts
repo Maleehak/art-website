@@ -2,7 +2,11 @@ import { defineCliConfig } from "sanity/cli";
 
 export default defineCliConfig({
   api: {
-    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
-    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+    projectId: "kvoc6vl5",
+    dataset: "production",
+  },
+  studioHost: "maleehak-art-gallery",
+  deployment: {
+    appId: "h37hvpzoa7ypgq2lfhjc3ogc",
   },
 });

@@ -7,8 +7,8 @@ export default defineConfig({
   name: "art-gallery",
   title: "Art Gallery",
 
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+  projectId: "kvoc6vl5",
+  dataset: "production",
 
   plugins: [structureTool(), visionTool()],
 
