@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Lock, CreditCard, Smartphone, Building2 } from "lucide-react";
+import { ArrowLeft, Lock, CreditCard, Smartphone, Building2, Truck } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { PlaceholderImage } from "@/components/PlaceholderImage";
 import { urlFor } from "@/lib/sanity";
 import type { ShippingAddress } from "@/types";
 
-type PaymentMethod = "card" | "jazzcash" | "easypaisa" | "bank_transfer";
+type PaymentMethod = "card" | "jazzcash" | "easypaisa" | "bank_transfer" | "cod";
 
 export default function CheckoutPage() {
   const { items, totalPrice } = useCart();
@@ -144,6 +144,30 @@ export default function CheckoutPage() {
         if (data.error) {
           alert(data.error);
         }
+      } else if (paymentMethod === "cod") {
+        const res = await fetch("/api/cod", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: items.map((item) => ({
+              artworkId: item.artwork._id,
+              title: item.artwork.title,
+              price: item.artwork.price,
+              quantity: item.quantity,
+            })),
+            email,
+            shippingAddress: address,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = `/checkout/success?provider=cod&ref=${data.orderId}`;
+          return;
+        }
+        if (data.error) {
+          alert(data.error);
+        }
       } else {
         alert(
           "JazzCash integration coming soon. Please use card payment, EasyPaisa, or bank transfer."
@@ -156,6 +180,8 @@ export default function CheckoutPage() {
       setIsProcessing(false);
     }
   }
+
+  const isPakistan = address.country === "Pakistan";
 
   const paymentMethods: {
     id: PaymentMethod;
@@ -171,6 +197,17 @@ export default function CheckoutPage() {
       icon: <Building2 className="h-5 w-5" />,
       available: true,
     },
+    ...(isPakistan
+      ? [
+          {
+            id: "cod" as PaymentMethod,
+            label: "Cash on Delivery",
+            description: "Pay when your artwork arrives",
+            icon: <Truck className="h-5 w-5" />,
+            available: true,
+          },
+        ]
+      : []),
     {
       id: "card",
       label: "Credit / Debit Card",

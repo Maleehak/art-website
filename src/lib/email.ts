@@ -215,6 +215,79 @@ export async function sendNewOrderArtistNotification({
   }
 }
 
+export async function sendCodConfirmation({
+  customerEmail,
+  customerName,
+  orderId,
+  items,
+  total,
+  shippingAddress,
+}: {
+  customerEmail: string;
+  customerName: string;
+  orderId: string;
+  items: { title: string; price: number }[];
+  total: number;
+  shippingAddress: { city: string; state: string };
+}) {
+  const itemRows = items
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #f5f0eb;">${item.title}</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #f5f0eb; text-align: right;">₨${item.price}</td>
+      </tr>`
+    )
+    .join("");
+
+  return resend.emails.send({
+    from: FROM_EMAIL,
+    to: customerEmail,
+    subject: `Order Confirmed — ${orderId} (Cash on Delivery)`,
+    html: `
+      <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Thank You, ${customerName}!</h1>
+        <p style="color: #6b6b6b; font-size: 15px; margin-bottom: 32px;">
+          Your order has been placed. You will pay <strong>₨${total}</strong> in cash when your artwork is delivered.
+        </p>
+
+        <div style="background: #faf8f5; padding: 24px; border-radius: 8px;">
+          <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px;">Order ID</p>
+          <p style="margin: 0 0 20px 0; font-size: 15px; color: #1a1a1a; font-weight: bold;">${orderId}</p>
+
+          <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px;">Payment Method</p>
+          <p style="margin: 0 0 20px 0; font-size: 15px; color: #1a1a1a; font-weight: bold;">Cash on Delivery</p>
+
+          <table style="width: 100%; font-size: 15px; color: #2c2c2c;">
+            <thead>
+              <tr>
+                <th style="text-align: left; padding-bottom: 12px; border-bottom: 2px solid #8b7355; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #6b6b6b;">Item</th>
+                <th style="text-align: right; padding-bottom: 12px; border-bottom: 2px solid #8b7355; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #6b6b6b;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemRows}
+              <tr>
+                <td style="padding-top: 16px; font-weight: bold; font-size: 17px;">Total (pay on delivery)</td>
+                <td style="padding-top: 16px; font-weight: bold; font-size: 17px; text-align: right;">₨${total}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p style="margin-top: 24px; color: #6b6b6b; font-size: 14px; line-height: 1.6;">
+          Delivery to <strong>${shippingAddress.city}, ${shippingAddress.state}</strong>. 
+          Please keep the exact amount ready. If you have any questions, reply to this email.
+        </p>
+
+        <p style="margin-top: 24px; color: #1a1a1a; font-style: italic;">
+          — Maleeha Khalid
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendBankTransferInstructions({
   customerEmail,
   customerName,
