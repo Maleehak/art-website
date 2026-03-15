@@ -121,9 +121,29 @@ export default function CheckoutPage() {
           alert(data.error);
         }
       } else if (paymentMethod === "bank_transfer") {
-        alert(
-          "Bank transfer details will be sent to your email. Please complete the transfer within 48 hours to confirm your order."
-        );
+        const res = await fetch("/api/bank-transfer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: items.map((item) => ({
+              artworkId: item.artwork._id,
+              title: item.artwork.title,
+              price: item.artwork.price,
+              quantity: item.quantity,
+            })),
+            email,
+            shippingAddress: address,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = `/checkout/success?provider=bank_transfer&ref=${data.orderId}`;
+          return;
+        }
+        if (data.error) {
+          alert(data.error);
+        }
       } else {
         alert(
           "JazzCash integration coming soon. Please use card payment, EasyPaisa, or bank transfer."

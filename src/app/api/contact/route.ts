@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sendContactNotification } from "@/lib/email";
 
 const RATE_LIMIT_WINDOW = 60_000;
 const MAX_REQUESTS = 5;
@@ -46,24 +47,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // When Resend is configured:
-    // const { Resend } = await import("resend");
-    // const resend = new Resend(process.env.RESEND_API_KEY);
-    // await resend.emails.send({
-    //   from: "Art Gallery <noreply@yourdomain.com>",
-    //   to: "your-email@example.com",
-    //   subject: `Contact Form: ${subject}`,
-    //   html: `
-    //     <h2>New Contact Form Submission</h2>
-    //     <p><strong>Name:</strong> ${name}</p>
-    //     <p><strong>Email:</strong> ${email}</p>
-    //     <p><strong>Subject:</strong> ${subject}</p>
-    //     <p><strong>Message:</strong></p>
-    //     <p>${message}</p>
-    //   `,
-    // });
-
-    console.log("Contact form submission:", { name, email, subject, message });
+    if (process.env.RESEND_API_KEY) {
+      await sendContactNotification({ name, email, subject, message });
+    } else {
+      console.log("Contact form submission (Resend not configured):", {
+        name,
+        email,
+        subject,
+        message,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

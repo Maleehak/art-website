@@ -27,6 +27,12 @@ export default function CheckoutSuccessPage() {
       return;
     }
 
+    if (provider === "bank_transfer") {
+      clearCart();
+      setStatus("success");
+      return;
+    }
+
     if (!intentId) {
       clearCart();
       setStatus("success");
@@ -92,19 +98,23 @@ export default function CheckoutSuccessPage() {
     );
   }
 
+  const isBankTransfer = provider === "bank_transfer";
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-24 text-center">
       <CheckCircle className="h-16 w-16 text-success mx-auto mb-6" />
       <h1 className="font-serif text-3xl sm:text-4xl font-bold text-soft-black mb-4">
-        Thank You for Your Purchase!
+        {isBankTransfer ? "Order Placed!" : "Thank You for Your Purchase!"}
       </h1>
       <p className="text-lg text-gallery-gray mb-3">
-        Your order has been confirmed and you&apos;ll receive a confirmation
-        email shortly.
+        {isBankTransfer
+          ? "Bank transfer details have been sent to your email. Please complete the transfer within 48 hours."
+          : "Your order has been confirmed and you'll receive a confirmation email shortly."}
       </p>
       <p className="text-sm text-gallery-gray mb-10">
-        We&apos;ll carefully package your artwork and ship it within 2-3
-        business days. You&apos;ll receive tracking information via email.
+        {isBankTransfer
+          ? "Once we receive your payment, we'll begin preparing your artwork for shipping."
+          : "We'll carefully package your artwork and ship it within 2-3 business days. You'll receive tracking information via email."}
       </p>
 
       <div className="bg-warm-white rounded-xl p-8 mb-8">

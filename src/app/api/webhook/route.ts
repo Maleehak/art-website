@@ -55,16 +55,25 @@ export async function POST(request: NextRequest) {
     case "intent.success": {
       console.log("Payment successful:", event.intentId);
 
-      // TODO: 1. Create order in Supabase
-      // const { artworkIds, shippingAddress } = event.metadata || {};
-      // await createOrder({ ... });
-
-      // TODO: 2. Update artwork status to "sold" in Sanity
-      // const ids = event.metadata?.artworkIds?.split(",") || [];
-      // for (const id of ids) { await updateArtworkStatus(id, "sold"); }
-
-      // TODO: 3. Send confirmation email via Resend
-      // await sendOrderConfirmation(event.customerDetails?.email, event.intentId);
+      if (process.env.RESEND_API_KEY && event.customerDetails?.email) {
+        try {
+          const { sendOrderConfirmation } = await import("@/lib/email");
+          const artworkTitles = event.metadata?.artworkIds?.split(",") || [];
+          await sendOrderConfirmation({
+            customerEmail: event.customerDetails.email,
+            customerName: event.customerDetails.name || "Customer",
+            orderId: event.receiptId || event.intentId,
+            items: artworkTitles.map((id) => ({
+              title: id,
+              price: event.amount / 100 / artworkTitles.length,
+            })),
+            total: event.amount / 100,
+          });
+          console.log("Order confirmation email sent to", event.customerDetails.email);
+        } catch (emailErr) {
+          console.error("Failed to send order confirmation email:", emailErr);
+        }
+      }
 
       break;
     }
