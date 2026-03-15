@@ -69,12 +69,12 @@ export function ArtworkDetail({ artwork }: ArtworkDetailProps) {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <ImageZoom className="rounded-xl overflow-hidden bg-warm-white aspect-[3/4]">
+          <ImageZoom className="rounded-xl overflow-hidden bg-warm-white aspect-square">
             {artwork.image?.asset?._ref ? (
               <Image
-                src={urlFor(artwork.image).width(900).height(1200).url()}
+                src={urlFor(artwork.image).width(1200).height(1200).quality(90).url()}
                 alt={artwork.image.alt || artwork.title}
-                width={900}
+                width={1200}
                 height={1200}
                 className="h-full w-full object-cover"
                 priority

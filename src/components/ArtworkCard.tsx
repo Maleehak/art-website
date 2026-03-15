@@ -25,12 +25,12 @@ export function ArtworkCard({ artwork, index = 0 }: ArtworkCardProps) {
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
       <Link href={`/artwork/${artwork.slug}`} className="group block">
-        <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-warm-white">
+        <div className="relative aspect-square overflow-hidden rounded-lg bg-warm-white">
           {hasImage ? (
             <Image
-              src={urlFor(artwork.image).width(600).height(800).url()}
+              src={urlFor(artwork.image).width(800).height(800).quality(90).url()}
               alt={artwork.image.alt || artwork.title}
-              width={600}
+              width={800}
               height={800}
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
