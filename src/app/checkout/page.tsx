@@ -152,11 +152,11 @@ export default function CheckoutPage() {
       available: true,
     },
     {
-      id: "jazzcash",
-      label: "JazzCash",
-      description: "Pay via JazzCash wallet",
-      icon: <Smartphone className="h-5 w-5" />,
-      available: false,
+      id: "bank_transfer",
+      label: "Bank Transfer",
+      description: "Direct bank deposit",
+      icon: <Building2 className="h-5 w-5" />,
+      available: true,
     },
     {
       id: "easypaisa",
@@ -166,11 +166,11 @@ export default function CheckoutPage() {
       available: false,
     },
     {
-      id: "bank_transfer",
-      label: "Bank Transfer",
-      description: "Direct bank deposit",
-      icon: <Building2 className="h-5 w-5" />,
-      available: true,
+      id: "jazzcash",
+      label: "JazzCash",
+      description: "Pay via JazzCash wallet",
+      icon: <Smartphone className="h-5 w-5" />,
+      available: false,
     },
   ];
 
