@@ -19,6 +19,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate all items are still available before processing
+    for (const item of items) {
+      if (item.artworkId) {
+        const artwork = await sanityClient.fetch(
+          `*[_type == "artwork" && _id == $id][0]{status, title}`,
+          { id: item.artworkId }
+        );
+        if (artwork && artwork.status !== "available") {
+          return NextResponse.json(
+            {
+              error: `"${artwork.title || item.title}" is no longer available (${artwork.status}). Please remove it from your cart.`,
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const totalAmount = items.reduce(
       (sum: number, item: { price: number; quantity: number }) =>
         sum + item.price * item.quantity,

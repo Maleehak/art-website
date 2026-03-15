@@ -42,6 +42,9 @@ const CartContext = createContext<CartContextValue | null>(null);
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD_ITEM": {
+      if (action.artwork.status === "sold" || action.artwork.status === "reserved") {
+        return state;
+      }
       const exists = state.items.find(
         (item) => item.artwork._id === action.artwork._id
       );
