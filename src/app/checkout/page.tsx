@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Lock, CreditCard, Smartphone, Building2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { PlaceholderImage } from "@/components/PlaceholderImage";
+import { urlFor } from "@/lib/sanity";
 import type { ShippingAddress } from "@/types";
 
 type PaymentMethod = "card" | "jazzcash" | "easypaisa" | "bank_transfer";
@@ -161,7 +163,7 @@ export default function CheckoutPage() {
       label: "EasyPaisa",
       description: "Pay via EasyPaisa mobile account",
       icon: <Smartphone className="h-5 w-5" />,
-      available: true,
+      available: false,
     },
     {
       id: "bank_transfer",
@@ -356,10 +358,20 @@ export default function CheckoutPage() {
                 {items.map((item) => (
                   <div key={item.artwork._id} className="flex gap-3">
                     <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
-                      <PlaceholderImage
-                        title={item.artwork.title}
-                        className="h-full w-full object-cover"
-                      />
+                      {item.artwork.image?.asset?._ref ? (
+                        <Image
+                          src={urlFor(item.artwork.image).width(128).height(128).quality(80).url()}
+                          alt={item.artwork.image.alt || item.artwork.title}
+                          width={128}
+                          height={128}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <PlaceholderImage
+                          title={item.artwork.title}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-soft-black truncate">
