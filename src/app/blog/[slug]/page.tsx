@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getBlogPost(slug);
   return {
     title: post?.title || "Blog Post",
-    description: post?.excerpt || "Read this post on the Art Gallery blog.",
+    description: post?.excerpt || "Read this post on the MK blog.",
   };
 }
 

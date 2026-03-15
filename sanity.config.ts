@@ -5,7 +5,7 @@ import { schemaTypes } from "./sanity/schemas";
 
 export default defineConfig({
   name: "art-gallery",
-  title: "Art Gallery",
+  title: "MK",
 
   projectId: "kvoc6vl5",
   dataset: "production",

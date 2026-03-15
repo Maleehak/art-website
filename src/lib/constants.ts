@@ -1,4 +1,4 @@
-export const SITE_NAME = "Art Gallery";
+export const SITE_NAME = "MK";
 export const SITE_DESCRIPTION =
   "Original paintings and limited edition prints. Discover unique contemporary artwork.";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
