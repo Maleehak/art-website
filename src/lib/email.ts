@@ -183,10 +183,10 @@ export async function sendBankTransferInstructions({
 
           <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px;">Bank Details</p>
           <table style="width: 100%; font-size: 14px; color: #2c2c2c;">
-            <tr><td style="padding: 4px 0; font-weight: bold;">Bank:</td><td>Meezan Bank</td></tr>
-            <tr><td style="padding: 4px 0; font-weight: bold;">Account Title:</td><td>Maleeha Khalid</td></tr>
-            <tr><td style="padding: 4px 0; font-weight: bold;">Account No:</td><td>XXXXXXXXXXXX</td></tr>
-            <tr><td style="padding: 4px 0; font-weight: bold;">IBAN:</td><td>PK00XXXX0000000000000000</td></tr>
+            <tr><td style="padding: 4px 0; font-weight: bold;">Bank:</td><td>${process.env.BANK_NAME || "—"}</td></tr>
+            <tr><td style="padding: 4px 0; font-weight: bold;">Account Title:</td><td>${process.env.BANK_ACCOUNT_TITLE || "—"}</td></tr>
+            <tr><td style="padding: 4px 0; font-weight: bold;">Account No:</td><td>${process.env.BANK_ACCOUNT_NUMBER || "—"}</td></tr>
+            <tr><td style="padding: 4px 0; font-weight: bold;">IBAN:</td><td>${process.env.BANK_IBAN || "—"}</td></tr>
           </table>
         </div>
 
