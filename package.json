@@ -1,0 +1,41 @@
+{
+  "name": "art-website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "studio": "npx sanity dev"
+  },
+  "dependencies": {
+    "@sanity/client": "^7.3.0",
+    "@sanity/image-url": "^1.1.0",
+    "@sanity/vision": "^3.99.0",
+    "@stripe/stripe-js": "^5.5.0",
+    "cloudinary": "^2.6.0",
+    "framer-motion": "^12.4.0",
+    "lucide-react": "^0.475.0",
+    "next": "^15.2.0",
+    "next-cloudinary": "^6.16.0",
+    "next-sanity": "^9.8.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "resend": "^4.1.0",
+    "sanity": "^5.16.0",
+    "stripe": "^17.7.0",
+    "styled-components": "^6.3.11"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "dotenv": "^17.3.1",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.2.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0"
+  }
+}
