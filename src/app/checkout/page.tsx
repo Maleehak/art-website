@@ -75,13 +75,56 @@ export default function CheckoutPage() {
         if (data.error) {
           alert(data.error);
         }
+      } else if (paymentMethod === "easypaisa") {
+        if (!address.phone) {
+          alert("Phone number is required for EasyPaisa payments.");
+          return;
+        }
+        const res = await fetch("/api/easypaisa/initiate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: items.map((item) => ({
+              artworkId: item.artwork._id,
+              title: item.artwork.title,
+              price: item.artwork.price,
+              quantity: item.quantity,
+            })),
+            email,
+            phone: address.phone,
+            shippingAddress: address,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.url && data.params) {
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = data.url;
+          form.target = "_self";
+
+          for (const key in data.params) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = data.params[key];
+            form.appendChild(input);
+          }
+
+          document.body.appendChild(form);
+          form.submit();
+          return;
+        }
+        if (data.error) {
+          alert(data.error);
+        }
       } else if (paymentMethod === "bank_transfer") {
         alert(
           "Bank transfer details will be sent to your email. Please complete the transfer within 48 hours to confirm your order."
         );
       } else {
         alert(
-          `${paymentMethod === "jazzcash" ? "JazzCash" : "EasyPaisa"} integration coming soon. Please use card payment or bank transfer.`
+          "JazzCash integration coming soon. Please use card payment, EasyPaisa, or bank transfer."
         );
       }
     } catch (error) {
@@ -116,9 +159,9 @@ export default function CheckoutPage() {
     {
       id: "easypaisa",
       label: "EasyPaisa",
-      description: "Pay via EasyPaisa wallet",
+      description: "Pay via EasyPaisa mobile account",
       icon: <Smartphone className="h-5 w-5" />,
-      available: false,
+      available: true,
     },
     {
       id: "bank_transfer",
@@ -360,8 +403,8 @@ export default function CheckoutPage() {
               </button>
 
               <p className="text-xs text-gallery-gray text-center">
-                Payments processed securely by XPay. Card details never touch
-                our servers.
+                Payments processed securely. Card and wallet details never
+                touch our servers.
               </p>
             </div>
           </div>

@@ -10,11 +10,23 @@ export default function CheckoutSuccessPage() {
   const { clearCart } = useCart();
   const searchParams = useSearchParams();
   const intentId = searchParams.get("xpay_intent_id");
+  const provider = searchParams.get("provider");
+  const urlStatus = searchParams.get("status");
   const [status, setStatus] = useState<"loading" | "success" | "failed">(
     "loading"
   );
 
   useEffect(() => {
+    if (provider === "easypaisa") {
+      if (urlStatus === "failed") {
+        setStatus("failed");
+      } else {
+        clearCart();
+        setStatus("success");
+      }
+      return;
+    }
+
     if (!intentId) {
       clearCart();
       setStatus("success");
@@ -43,7 +55,7 @@ export default function CheckoutSuccessPage() {
     }
 
     checkStatus();
-  }, [intentId, clearCart]);
+  }, [intentId, provider, urlStatus, clearCart]);
 
   if (status === "loading") {
     return (

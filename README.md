@@ -7,7 +7,7 @@ A high-performance art e-commerce website built with Next.js 15, featuring stati
 - **Framework**: Next.js 15 (App Router) + TypeScript
 - **Styling**: Tailwind CSS 4 + Framer Motion
 - **CMS**: Sanity.io (headless)
-- **Payments**: XPay Global (cards, Google Pay) + JazzCash/EasyPaisa (coming soon)
+- **Payments**: XPay Global (cards, Google Pay) + EasyPaisa (mobile wallet) + JazzCash (coming soon)
 - **Database**: Supabase (Postgres)
 - **Email**: Resend
 - **Hosting**: Vercel
@@ -79,7 +79,7 @@ art-website/
 - **Gallery & Collections**: Organized artwork browsing with categories
 - **Artwork Detail**: Image zoom, full details, add to cart
 - **Shopping Cart**: Persistent cart with drawer and full page view
-- **Secure Checkout**: XPay Global integration, cards + Google Pay
+- **Secure Checkout**: XPay Global (cards + Google Pay) + EasyPaisa (mobile wallet)
 - **Multi-Currency**: USD, PKR, EUR, GBP display toggle
 - **Wishlist**: Save favorites with localStorage
 - **Blog/Journal**: Studio updates and process insights
@@ -103,6 +103,13 @@ art-website/
 3. Add them to `.env.local` as `XPAY_PUBLIC_KEY` and `XPAY_PRIVATE_KEY`
 4. Set up a webhook in the XPay dashboard pointing to `/api/webhook`
 5. Use `XPAY_ENVIRONMENT=sandbox` for testing, `production` for live
+
+### EasyPaisa (Mobile Wallet Payments)
+
+1. Apply for a merchant account at [easypaisa.com.pk](https://www.easypaisa.com.pk/merchant)
+2. Get your Store ID and Hash Key from the EasyPaisa merchant portal
+3. Add them to `.env.local` as `EASYPAISA_STORE_ID` and `EASYPAISA_HASH_KEY`
+4. Use `EASYPAISA_ENVIRONMENT=sandbox` for testing, `production` for live
 
 ### Supabase
 
