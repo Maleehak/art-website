@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Trash2, ShoppingBag, ArrowLeft, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { PlaceholderImage } from "@/components/PlaceholderImage";
+import { urlFor } from "@/lib/sanity";
 
 export default function CartPage() {
   const { items, removeItem, clearCart, totalPrice } = useCart();
@@ -61,10 +63,20 @@ export default function CartPage() {
                 href={`/artwork/${item.artwork.slug}`}
                 className="h-28 w-28 sm:h-36 sm:w-36 flex-shrink-0 overflow-hidden rounded-lg"
               >
-                <PlaceholderImage
-                  title={item.artwork.title}
-                  className="h-full w-full object-cover"
-                />
+                {item.artwork.image?.asset?._ref ? (
+                  <Image
+                    src={urlFor(item.artwork.image).width(288).height(288).quality(80).url()}
+                    alt={item.artwork.image.alt || item.artwork.title}
+                    width={288}
+                    height={288}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <PlaceholderImage
+                    title={item.artwork.title}
+                    className="h-full w-full object-cover"
+                  />
+                )}
               </Link>
               <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>

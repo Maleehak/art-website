@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, ArrowRight, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useCart } from "@/context/CartContext";
 import { PlaceholderImage } from "@/components/PlaceholderImage";
+import { urlFor } from "@/lib/sanity";
 import type { Artwork } from "@/types";
 
 export default function WishlistPage() {
@@ -69,10 +71,20 @@ export default function WishlistPage() {
                 href={`/artwork/${artwork.slug}`}
                 className="h-28 w-28 sm:h-36 sm:w-36 flex-shrink-0 overflow-hidden rounded-lg"
               >
-                <PlaceholderImage
-                  title={artwork.title}
-                  className="h-full w-full object-cover"
-                />
+                {artwork.image?.asset?._ref ? (
+                  <Image
+                    src={urlFor(artwork.image).width(288).height(288).quality(80).url()}
+                    alt={artwork.image.alt || artwork.title}
+                    width={288}
+                    height={288}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <PlaceholderImage
+                    title={artwork.title}
+                    className="h-full w-full object-cover"
+                  />
+                )}
               </Link>
               <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>

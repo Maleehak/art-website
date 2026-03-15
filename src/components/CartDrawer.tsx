@@ -2,10 +2,12 @@
 
 import { X, Trash2, ShoppingBag } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { PlaceholderImage } from "./PlaceholderImage";
+import { urlFor } from "@/lib/sanity";
 
 export function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, totalPrice, totalItems } =
@@ -66,10 +68,20 @@ export function CartDrawer() {
                         className="flex gap-4 rounded-lg bg-warm-white p-3"
                       >
                         <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md">
-                          <PlaceholderImage
-                            title={item.artwork.title}
-                            className="h-full w-full object-cover"
-                          />
+                          {item.artwork.image?.asset?._ref ? (
+                            <Image
+                              src={urlFor(item.artwork.image).width(160).height(160).quality(80).url()}
+                              alt={item.artwork.image.alt || item.artwork.title}
+                              width={160}
+                              height={160}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <PlaceholderImage
+                              title={item.artwork.title}
+                              className="h-full w-full object-cover"
+                            />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-serif text-sm font-medium text-soft-black truncate">
