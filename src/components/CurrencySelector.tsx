@@ -4,8 +4,8 @@ import { useCurrency } from "@/context/CurrencyContext";
 import type { Currency } from "@/types";
 
 const options: { value: Currency; label: string }[] = [
-  { value: "USD", label: "$ USD" },
   { value: "PKR", label: "₨ PKR" },
+  { value: "USD", label: "$ USD" },
   { value: "EUR", label: "€ EUR" },
   { value: "GBP", label: "£ GBP" },
 ];

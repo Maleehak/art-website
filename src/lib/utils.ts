@@ -9,10 +9,10 @@ export const CURRENCIES: Record<Currency, CurrencyRate> = {
 
 export function formatPrice(
   amount: number,
-  currency: Currency = "USD"
+  currency: Currency = "PKR"
 ): string {
   const { symbol } = CURRENCIES[currency];
-  const converted = currency === "USD" ? amount : amount * CURRENCIES[currency].rate;
+  const converted = currency === "PKR" ? amount : amount * CURRENCIES[currency].rate;
   return `${symbol}${converted.toLocaleString("en-US", {
     minimumFractionDigits: currency === "PKR" ? 0 : 2,
     maximumFractionDigits: currency === "PKR" ? 0 : 2,

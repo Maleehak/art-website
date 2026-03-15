@@ -3,7 +3,7 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || "MK Art <onboarding@resend.dev>";
+  process.env.RESEND_FROM_EMAIL || "Maleeha Khalid <hello@maleehakhalidart.com>";
 const ARTIST_EMAIL =
   process.env.ARTIST_EMAIL || "maleehakhalid93@gmail.com";
 
@@ -71,7 +71,7 @@ export async function sendOrderConfirmation({
       (item) => `
       <tr>
         <td style="padding: 12px 0; border-bottom: 1px solid #f5f0eb;">${item.title}</td>
-        <td style="padding: 12px 0; border-bottom: 1px solid #f5f0eb; text-align: right;">$${item.price.toFixed(2)}</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #f5f0eb; text-align: right;">₨${item.price}</td>
       </tr>`
     )
     .join("");
@@ -102,7 +102,7 @@ export async function sendOrderConfirmation({
               ${itemRows}
               <tr>
                 <td style="padding-top: 16px; font-weight: bold; font-size: 17px;">Total</td>
-                <td style="padding-top: 16px; font-weight: bold; font-size: 17px; text-align: right;">$${total.toFixed(2)}</td>
+                <td style="padding-top: 16px; font-weight: bold; font-size: 17px; text-align: right;">₨${total}</td>
               </tr>
             </tbody>
           </table>
@@ -123,7 +123,7 @@ export async function sendOrderConfirmation({
   await resend.emails.send({
     from: FROM_EMAIL,
     to: ARTIST_EMAIL,
-    subject: `New Order! ${orderId} — $${total.toFixed(2)}`,
+    subject: `New Order! ${orderId} — ₨${total}`,
     html: `
       <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
         <h2 style="color: #1a1a1a; border-bottom: 2px solid #4a7c59; padding-bottom: 12px;">
@@ -140,16 +140,79 @@ export async function sendOrderConfirmation({
           </tr>
           <tr>
             <td style="padding: 8px 0; font-weight: bold;">Total:</td>
-            <td style="padding: 8px 0; font-size: 18px; font-weight: bold; color: #4a7c59;">$${total.toFixed(2)}</td>
+            <td style="padding: 8px 0; font-size: 18px; font-weight: bold; color: #4a7c59;">₨${total}</td>
           </tr>
         </table>
         <h3 style="color: #1a1a1a;">Items:</h3>
         <ul style="color: #2c2c2c; line-height: 1.8;">
-          ${items.map((i) => `<li>${i.title} — $${i.price.toFixed(2)}</li>`).join("")}
+          ${items.map((i) => `<li>${i.title} — ₨${i.price}</li>`).join("")}
         </ul>
       </div>
     `,
   });
+}
+
+export async function sendNewOrderArtistNotification({
+  customerEmail,
+  customerName,
+  orderId,
+  items,
+  total,
+  paymentMethod,
+}: {
+  customerEmail: string;
+  customerName: string;
+  orderId: string;
+  items: { title: string; price: number }[];
+  total: number;
+  paymentMethod: string;
+}) {
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: ARTIST_EMAIL,
+      replyTo: customerEmail,
+      subject: `New Order! ${orderId} — ₨${total}`,
+      html: `
+        <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+          <h2 style="color: #1a1a1a; border-bottom: 2px solid #4a7c59; padding-bottom: 12px;">
+            New Order Received
+          </h2>
+          <table style="width: 100%; margin: 24px 0; font-size: 15px; color: #2c2c2c;">
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; width: 120px;">Order ID:</td>
+              <td style="padding: 8px 0;">${orderId}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold;">Customer:</td>
+              <td style="padding: 8px 0;">${customerName} (<a href="mailto:${customerEmail}" style="color: #8b7355;">${customerEmail}</a>)</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold;">Payment:</td>
+              <td style="padding: 8px 0;">${paymentMethod}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold;">Total:</td>
+              <td style="padding: 8px 0; font-size: 18px; font-weight: bold; color: #4a7c59;">₨${total}</td>
+            </tr>
+          </table>
+          <h3 style="color: #1a1a1a;">Items:</h3>
+          <ul style="color: #2c2c2c; line-height: 1.8;">
+            ${items.map((i) => `<li>${i.title} — ₨${i.price}</li>`).join("")}
+          </ul>
+          <p style="margin-top: 24px; padding: 12px; background: #fff8e1; border-radius: 6px; font-size: 13px; color: #5d4037;">
+            These items have been automatically marked as <strong>reserved</strong> in Sanity.
+            Update their status to <strong>sold</strong> after payment is confirmed, or back to <strong>available</strong> if the order is cancelled.
+          </p>
+        </div>
+      `,
+    });
+    if (result.error) {
+      console.error("Artist notification failed:", result.error);
+    }
+  } catch (err) {
+    console.error("Artist notification error:", err);
+  }
 }
 
 export async function sendBankTransferInstructions({
@@ -176,7 +239,7 @@ export async function sendBankTransferInstructions({
 
         <div style="background: #faf8f5; padding: 24px; border-radius: 8px;">
           <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px;">Amount Due</p>
-          <p style="margin: 0 0 24px 0; font-size: 24px; color: #1a1a1a; font-weight: bold;">$${total.toFixed(2)}</p>
+          <p style="margin: 0 0 24px 0; font-size: 24px; color: #1a1a1a; font-weight: bold;">₨${total}</p>
 
           <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px;">Reference</p>
           <p style="margin: 0 0 24px 0; font-size: 15px; color: #1a1a1a; font-weight: bold;">${orderId}</p>

@@ -76,7 +76,7 @@ export default function AdminPage() {
   const stats = [
     {
       label: "Total Revenue",
-      value: `$${totalRevenue.toLocaleString()}`,
+      value: `₨${totalRevenue.toLocaleString()}`,
       icon: DollarSign,
       change: "+12%",
     },

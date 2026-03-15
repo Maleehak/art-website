@@ -179,6 +179,20 @@ export function ArtworkDetail({ artwork }: ArtworkDetailProps) {
                   for available works.
                 </p>
               </div>
+            ) : artwork.status === "reserved" ? (
+              <div>
+                <p className="text-2xl font-bold text-accent">Reserved</p>
+                <p className="mt-2 text-sm text-gallery-gray">
+                  This piece is currently reserved for another buyer. Browse our{" "}
+                  <Link
+                    href="/collections"
+                    className="text-accent hover:text-accent-dark underline underline-offset-2"
+                  >
+                    collections
+                  </Link>{" "}
+                  for available works.
+                </p>
+              </div>
             ) : (
               <div>
                 <p className="text-3xl font-bold text-soft-black">

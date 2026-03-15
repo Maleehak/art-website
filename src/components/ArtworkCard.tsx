@@ -64,6 +64,8 @@ export function ArtworkCard({ artwork, index = 0 }: ArtworkCardProps) {
           <p className="font-medium text-soft-black mt-1">
             {artwork.status === "sold" ? (
               <span className="text-sold">Sold</span>
+            ) : artwork.status === "reserved" ? (
+              <span className="text-accent">Reserved</span>
             ) : (
               format(artwork.price)
             )}

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendBankTransferInstructions } from "@/lib/email";
+import {
+  sendBankTransferInstructions,
+  sendNewOrderArtistNotification,
+} from "@/lib/email";
+import { sanityClient } from "@/lib/sanity";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +27,23 @@ export async function POST(request: NextRequest) {
 
     const orderId = `BT_${Date.now()}`;
 
+    // Mark all ordered artworks as "reserved" in Sanity
+    for (const item of items) {
+      if (item.artworkId) {
+        try {
+          await sanityClient
+            .patch(item.artworkId)
+            .set({ status: "reserved" })
+            .commit();
+          console.log(`Reserved artwork: ${item.title} (${item.artworkId})`);
+        } catch (err) {
+          console.error(`Failed to reserve ${item.artworkId}:`, err);
+        }
+      }
+    }
+
     if (process.env.RESEND_API_KEY) {
+      // Send bank details to customer
       const result = await sendBankTransferInstructions({
         customerEmail: email,
         customerName: shippingAddress?.fullName || "Customer",
@@ -32,10 +52,23 @@ export async function POST(request: NextRequest) {
       });
 
       if (result.error) {
-        console.error("Email send failed:", result.error);
+        console.error("Customer email failed:", result.error);
       } else {
         console.log("Bank transfer email sent to:", email);
       }
+
+      // Notify artist about the new order
+      await sendNewOrderArtistNotification({
+        customerEmail: email,
+        customerName: shippingAddress?.fullName || "Customer",
+        orderId,
+        items: items.map((i: { title: string; price: number }) => ({
+          title: i.title,
+          price: i.price,
+        })),
+        total: totalAmount,
+        paymentMethod: "Bank Transfer",
+      });
     }
 
     return NextResponse.json({
