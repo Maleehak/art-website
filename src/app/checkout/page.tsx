@@ -142,7 +142,7 @@ export default function CheckoutPage() {
 
         const data = await res.json();
         if (data.success) {
-          window.location.href = `/checkout/success?provider=bank_transfer&ref=${data.orderId}`;
+          window.location.href = `/checkout/success?provider=bank_transfer&ref=${data.orderId}${hasFlashSaleItem ? "&sale=true" : ""}`;
           return;
         }
         if (data.error) {

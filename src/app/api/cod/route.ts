@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
           await sanityClient
             .patch(item.artworkId)
             .ifRevisionId(artwork._rev)
-            .set({ status: "reserved" })
+            .set({ status: "reserved", reservedAt: new Date().toISOString() })
             .commit();
         } catch {
           return NextResponse.json(

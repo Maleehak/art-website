@@ -80,10 +80,9 @@ export async function POST(request: NextRequest) {
           await sanityClient
             .patch(item.artworkId)
             .ifRevisionId(artwork._rev)
-            .set({ status: "reserved" })
+            .set({ status: "reserved", reservedAt: new Date().toISOString() })
             .commit();
         } catch {
-          // Another customer reserved it between our fetch and patch
           return NextResponse.json(
             {
               error: `"${artwork.title}" was just purchased by another customer. Please remove it from your cart.`,

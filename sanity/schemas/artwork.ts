@@ -118,6 +118,13 @@ export default defineType({
       initialValue: false,
     }),
     defineField({
+      name: "reservedAt",
+      title: "Reserved At",
+      type: "datetime",
+      description: "Timestamp when the item was reserved (set automatically)",
+      readOnly: true,
+    }),
+    defineField({
       name: "salePrice",
       title: "Sale Price",
       type: "number",

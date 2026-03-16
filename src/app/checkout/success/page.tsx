@@ -100,6 +100,7 @@ export default function CheckoutSuccessPage() {
 
   const isBankTransfer = provider === "bank_transfer";
   const isCod = provider === "cod";
+  const isFlashSale = searchParams.get("sale") === "true";
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-24 text-center">
@@ -115,14 +116,18 @@ export default function CheckoutSuccessPage() {
         {isCod
           ? "Your order is confirmed! You will pay in cash when your artwork is delivered."
           : isBankTransfer
-          ? "Bank transfer details have been sent to your email. Please complete the transfer within 48 hours."
+          ? isFlashSale
+            ? "Bank transfer details have been sent to your email. Please complete the transfer within 5 minutes to secure your flash sale item."
+            : "Bank transfer details have been sent to your email. Please complete the transfer within 48 hours."
           : "Your order has been confirmed and you'll receive a confirmation email shortly."}
       </p>
       <p className="text-sm text-gallery-gray mb-10">
         {isCod
           ? "Please keep the exact amount ready. We'll contact you before delivery to confirm the schedule."
           : isBankTransfer
-          ? "Once we receive your payment, we'll begin preparing your artwork for shipping."
+          ? isFlashSale
+            ? "This is a flash sale — the item will be released to other buyers if payment is not received within 5 minutes."
+            : "Once we receive your payment, we'll begin preparing your artwork for shipping."
           : "We'll carefully package your artwork and ship it within 2-3 business days. You'll receive tracking information via email."}
       </p>
 

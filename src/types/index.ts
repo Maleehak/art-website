@@ -20,6 +20,7 @@ export interface Artwork {
   salePrice?: number;
   saleStart?: string;
   saleDurationHours?: number;
+  reservedAt?: string;
 }
 
 export function isArtworkOnSale(artwork: Artwork): boolean {
