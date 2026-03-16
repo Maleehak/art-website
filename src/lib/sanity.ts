@@ -17,6 +17,48 @@ export function urlFor(source: SanityImage) {
   return builder.image(source);
 }
 
+const FLASH_SALE_DEADLINE_MS = 5 * 60 * 1000;
+const REGULAR_DEADLINE_MS = 48 * 60 * 60 * 1000;
+
+export async function releaseExpiredReservations(): Promise<void> {
+  try {
+    const reserved = await sanityClient.fetch<
+      {
+        _id: string;
+        reservedAt: string | null;
+        salePrice: number | null;
+        saleStart: string | null;
+        saleDurationHours: number | null;
+      }[]
+    >(
+      `*[_type == "artwork" && status == "reserved"]{
+        _id, reservedAt, salePrice, saleStart, saleDurationHours
+      }`
+    );
+
+    const now = Date.now();
+
+    for (const artwork of reserved) {
+      if (!artwork.reservedAt) continue;
+
+      const reservedTime = new Date(artwork.reservedAt).getTime();
+      const isFlashSale =
+        artwork.salePrice && artwork.saleStart && artwork.saleDurationHours;
+      const deadline = isFlashSale ? FLASH_SALE_DEADLINE_MS : REGULAR_DEADLINE_MS;
+
+      if (now - reservedTime > deadline) {
+        await sanityClient
+          .patch(artwork._id)
+          .set({ status: "available" })
+          .unset(["reservedAt"])
+          .commit();
+      }
+    }
+  } catch (err) {
+    console.error("releaseExpiredReservations error:", err);
+  }
+}
+
 export async function getCollections(): Promise<Collection[]> {
   return sanityClient.fetch(`
     *[_type == "collection"] | order(order asc) {
@@ -111,6 +153,7 @@ export async function getArtwork(slug: string): Promise<Artwork | null> {
 }
 
 export async function getFeaturedArtworks(): Promise<Artwork[]> {
+  await releaseExpiredReservations();
   return sanityClient.fetch(`
     *[_type == "artwork" && featured == true] | order(_createdAt desc)[0...8] {
       _id,
@@ -211,6 +254,7 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
 }
 
 export async function getActiveSales(): Promise<Artwork[]> {
+  await releaseExpiredReservations();
   const artworks: Artwork[] = await sanityClient.fetch(`
     *[_type == "artwork" && defined(salePrice) && defined(saleStart) && defined(saleDurationHours) && status in ["available", "reserved", "sold"]] {
       _id,
