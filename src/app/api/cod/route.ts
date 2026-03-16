@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   sendCodConfirmation,
   sendNewOrderArtistNotification,
@@ -6,6 +7,13 @@ import {
 import { sanityClient } from "@/lib/sanity";
 
 export const dynamic = "force-dynamic";
+
+interface ValidatedItem {
+  artworkId: string;
+  title: string;
+  price: number;
+  quantity: number;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,18 +42,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    interface ValidatedItem {
-      artworkId: string;
-      title: string;
-      price: number;
-      quantity: number;
-    }
     const validatedItems: ValidatedItem[] = [];
 
     for (const item of items) {
       if (item.artworkId) {
         const artwork = await sanityClient.fetch(
-          `*[_type == "artwork" && _id == $id][0]{status, title, price}`,
+          `*[_type == "artwork" && _id == $id][0]{_rev, status, title, price}`,
           { id: item.artworkId }
         );
         if (!artwork) {
@@ -62,6 +64,23 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
+
+        // Atomically reserve: only succeeds if no one else modified this document
+        try {
+          await sanityClient
+            .patch(item.artworkId)
+            .ifRevisionId(artwork._rev)
+            .set({ status: "reserved" })
+            .commit();
+        } catch {
+          return NextResponse.json(
+            {
+              error: `"${artwork.title}" was just purchased by another customer. Please remove it from your cart.`,
+            },
+            { status: 409 }
+          );
+        }
+
         validatedItems.push({
           artworkId: item.artworkId,
           title: artwork.title,
@@ -71,23 +90,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    revalidatePath("/");
+    revalidatePath("/collections");
+    for (const item of validatedItems) {
+      revalidatePath(`/artwork/${item.artworkId}`);
+    }
+
     const totalAmount = validatedItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
 
     const orderId = `COD_${Date.now()}`;
-
-    for (const item of validatedItems) {
-      try {
-        await sanityClient
-          .patch(item.artworkId)
-          .set({ status: "reserved" })
-          .commit();
-      } catch (err) {
-        console.error(`Failed to reserve ${item.artworkId}:`, err);
-      }
-    }
 
     if (process.env.RESEND_API_KEY) {
       await sendCodConfirmation({
