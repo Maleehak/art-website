@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,8 +64,27 @@ function TimerBlock({ value, label }: { value: number; label: string }) {
 }
 
 export function FlashSaleBanner({ artwork, saleEndTime }: FlashSaleBannerProps) {
+  const router = useRouter();
   const { hours, minutes, seconds, expired, mounted } = useCountdown(saleEndTime);
   const { format } = useCurrency();
+  const [currentStatus, setCurrentStatus] = useState(artwork.status);
+
+  const pollStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/artwork-status?id=${artwork._id}`);
+      const data = await res.json();
+      if (data.status && data.status !== currentStatus) {
+        setCurrentStatus(data.status);
+        router.refresh();
+      }
+    } catch {}
+  }, [artwork._id, currentStatus, router]);
+
+  useEffect(() => {
+    if (currentStatus !== "reserved") return;
+    const interval = setInterval(pollStatus, 15000);
+    return () => clearInterval(interval);
+  }, [currentStatus, pollStatus]);
 
   if (expired) return null;
 
@@ -72,7 +92,7 @@ export function FlashSaleBanner({ artwork, saleEndTime }: FlashSaleBannerProps) 
     ((artwork.price - artwork.salePrice!) / artwork.price) * 100
   );
 
-  const isClaimed = artwork.status === "reserved" || artwork.status === "sold";
+  const isClaimed = currentStatus === "reserved" || currentStatus === "sold";
 
   return (
     <AnimatePresence>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ShoppingBag, Check, Heart } from "lucide-react";
@@ -19,10 +20,27 @@ interface ArtworkDetailProps {
 }
 
 export function ArtworkDetail({ artwork }: ArtworkDetailProps) {
+  const router = useRouter();
   const { addItem, isInCart, openCart } = useCart();
   const { format } = useCurrency();
   const inCart = isInCart(artwork._id);
   const [wishlisted, setWishlisted] = useState(false);
+
+  const pollStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/artwork-status?id=${artwork._id}`);
+      const data = await res.json();
+      if (data.status && data.status !== artwork.status) {
+        router.refresh();
+      }
+    } catch {}
+  }, [artwork._id, artwork.status, router]);
+
+  useEffect(() => {
+    if (artwork.status !== "reserved") return;
+    const interval = setInterval(pollStatus, 15000);
+    return () => clearInterval(interval);
+  }, [artwork.status, pollStatus]);
 
   useEffect(() => {
     try {

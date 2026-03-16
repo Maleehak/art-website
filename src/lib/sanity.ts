@@ -11,6 +11,14 @@ export const sanityClient = createClient({
   token: process.env.SANITY_API_TOKEN,
 });
 
+export const sanityWriteClient = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+  useCdn: false,
+  apiVersion: "2024-01-01",
+  token: process.env.SANITY_API_TOKEN,
+});
+
 const builder = imageUrlBuilder(sanityClient);
 
 export function urlFor(source: SanityImage) {
@@ -22,7 +30,7 @@ const REGULAR_DEADLINE_MS = 48 * 60 * 60 * 1000;
 
 export async function releaseExpiredReservations(): Promise<void> {
   try {
-    const reserved = await sanityClient.fetch<
+    const reserved = await sanityWriteClient.fetch<
       {
         _id: string;
         reservedAt: string | null;
@@ -47,7 +55,7 @@ export async function releaseExpiredReservations(): Promise<void> {
       const deadline = isFlashSale ? FLASH_SALE_DEADLINE_MS : REGULAR_DEADLINE_MS;
 
       if (now - reservedTime > deadline) {
-        await sanityClient
+        await sanityWriteClient
           .patch(artwork._id)
           .set({ status: "available" })
           .unset(["reservedAt"])
