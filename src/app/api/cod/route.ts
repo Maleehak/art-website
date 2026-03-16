@@ -26,43 +26,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate all items are still available
+    const hasSaleItem = items.some((item: { isSale?: boolean }) => item.isSale);
+    if (hasSaleItem) {
+      return NextResponse.json(
+        { error: "Cash on Delivery is not available for flash sale items. Please use bank transfer instead." },
+        { status: 400 }
+      );
+    }
+
+    interface ValidatedItem {
+      artworkId: string;
+      title: string;
+      price: number;
+      quantity: number;
+    }
+    const validatedItems: ValidatedItem[] = [];
+
     for (const item of items) {
       if (item.artworkId) {
         const artwork = await sanityClient.fetch(
-          `*[_type == "artwork" && _id == $id][0]{status, title}`,
+          `*[_type == "artwork" && _id == $id][0]{status, title, price}`,
           { id: item.artworkId }
         );
-        if (artwork && artwork.status !== "available") {
+        if (!artwork) {
+          return NextResponse.json(
+            { error: `Artwork not found: "${item.title}".` },
+            { status: 400 }
+          );
+        }
+        if (artwork.status !== "available") {
           return NextResponse.json(
             {
-              error: `"${artwork.title || item.title}" is no longer available (${artwork.status}). Please remove it from your cart.`,
+              error: `"${artwork.title}" is no longer available (${artwork.status}). Please remove it from your cart.`,
             },
             { status: 400 }
           );
         }
+        validatedItems.push({
+          artworkId: item.artworkId,
+          title: artwork.title,
+          price: artwork.price,
+          quantity: item.quantity || 1,
+        });
       }
     }
 
-    const totalAmount = items.reduce(
-      (sum: number, item: { price: number; quantity: number }) =>
-        sum + item.price * item.quantity,
+    const totalAmount = validatedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
       0
     );
 
     const orderId = `COD_${Date.now()}`;
 
-    // Mark all ordered artworks as "reserved"
-    for (const item of items) {
-      if (item.artworkId) {
-        try {
-          await sanityClient
-            .patch(item.artworkId)
-            .set({ status: "reserved" })
-            .commit();
-        } catch (err) {
-          console.error(`Failed to reserve ${item.artworkId}:`, err);
-        }
+    for (const item of validatedItems) {
+      try {
+        await sanityClient
+          .patch(item.artworkId)
+          .set({ status: "reserved" })
+          .commit();
+      } catch (err) {
+        console.error(`Failed to reserve ${item.artworkId}:`, err);
       }
     }
 
@@ -71,7 +94,7 @@ export async function POST(request: NextRequest) {
         customerEmail: email,
         customerName: shippingAddress.fullName || "Customer",
         orderId,
-        items: items.map((i: { title: string; price: number }) => ({
+        items: validatedItems.map((i) => ({
           title: i.title,
           price: i.price,
         })),
@@ -83,7 +106,7 @@ export async function POST(request: NextRequest) {
         customerEmail: email,
         customerName: shippingAddress.fullName || "Customer",
         orderId,
-        items: items.map((i: { title: string; price: number }) => ({
+        items: validatedItems.map((i) => ({
           title: i.title,
           price: i.price,
         })),

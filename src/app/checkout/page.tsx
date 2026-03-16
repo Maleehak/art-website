@@ -9,6 +9,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { PlaceholderImage } from "@/components/PlaceholderImage";
 import { urlFor } from "@/lib/sanity";
 import type { ShippingAddress } from "@/types";
+import { getEffectivePrice, isArtworkOnSale } from "@/types";
 
 type PaymentMethod = "card" | "jazzcash" | "easypaisa" | "bank_transfer" | "cod";
 
@@ -61,8 +62,9 @@ export default function CheckoutPage() {
             items: items.map((item) => ({
               artworkId: item.artwork._id,
               title: item.artwork.title,
-              price: item.artwork.price,
+              price: getEffectivePrice(item.artwork),
               quantity: item.quantity,
+              isSale: isArtworkOnSale(item.artwork),
             })),
             email,
             shippingAddress: address,
@@ -89,8 +91,9 @@ export default function CheckoutPage() {
             items: items.map((item) => ({
               artworkId: item.artwork._id,
               title: item.artwork.title,
-              price: item.artwork.price,
+              price: getEffectivePrice(item.artwork),
               quantity: item.quantity,
+              isSale: isArtworkOnSale(item.artwork),
             })),
             email,
             phone: address.phone,
@@ -128,8 +131,9 @@ export default function CheckoutPage() {
             items: items.map((item) => ({
               artworkId: item.artwork._id,
               title: item.artwork.title,
-              price: item.artwork.price,
+              price: getEffectivePrice(item.artwork),
               quantity: item.quantity,
+              isSale: isArtworkOnSale(item.artwork),
             })),
             email,
             shippingAddress: address,
@@ -152,8 +156,9 @@ export default function CheckoutPage() {
             items: items.map((item) => ({
               artworkId: item.artwork._id,
               title: item.artwork.title,
-              price: item.artwork.price,
+              price: getEffectivePrice(item.artwork),
               quantity: item.quantity,
+              isSale: isArtworkOnSale(item.artwork),
             })),
             email,
             shippingAddress: address,
@@ -182,6 +187,7 @@ export default function CheckoutPage() {
   }
 
   const isPakistan = address.country === "Pakistan";
+  const hasFlashSaleItem = items.some((item) => isArtworkOnSale(item.artwork));
 
   const paymentMethods: {
     id: PaymentMethod;
@@ -193,11 +199,13 @@ export default function CheckoutPage() {
     {
       id: "bank_transfer",
       label: "Bank Transfer",
-      description: "Direct bank deposit",
+      description: hasFlashSaleItem
+        ? "Complete within 5 minutes for flash sale items"
+        : "Direct bank deposit",
       icon: <Building2 className="h-5 w-5" />,
       available: true,
     },
-    ...(isPakistan
+    ...(isPakistan && !hasFlashSaleItem
       ? [
           {
             id: "cod" as PaymentMethod,
@@ -438,9 +446,22 @@ export default function CheckoutPage() {
                         {item.artwork.medium}
                       </p>
                     </div>
-                    <p className="text-sm font-medium text-soft-black">
-                      {format(item.artwork.price)}
-                    </p>
+                    <div className="text-right">
+                      {isArtworkOnSale(item.artwork) ? (
+                        <>
+                          <p className="text-sm font-bold text-red-600">
+                            {format(item.artwork.salePrice!)}
+                          </p>
+                          <p className="text-xs text-gallery-gray line-through">
+                            {format(item.artwork.price)}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-sm font-medium text-soft-black">
+                          {format(item.artwork.price)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

@@ -293,16 +293,34 @@ export async function sendBankTransferInstructions({
   customerName,
   orderId,
   total,
+  isFlashSale = false,
 }: {
   customerEmail: string;
   customerName: string;
   orderId: string;
   total: number;
+  isFlashSale?: boolean;
 }) {
+  const deadline = isFlashSale
+    ? "5 minutes"
+    : "48 hours";
+  const urgencyNote = isFlashSale
+    ? `<div style="margin-top: 24px; padding: 16px; background: #fff0f0; border: 1px solid #c44536; border-radius: 8px;">
+        <p style="margin: 0; color: #c44536; font-size: 15px; font-weight: bold;">
+          ⏰ Flash Sale — Complete within 5 minutes!
+        </p>
+        <p style="margin: 8px 0 0 0; color: #c44536; font-size: 13px;">
+          This is a flash sale purchase. You must complete the bank transfer and send the payment screenshot within <strong>5 minutes</strong>, otherwise the item will be released for other buyers.
+        </p>
+      </div>`
+    : "";
+
   return resend.emails.send({
     from: FROM_EMAIL,
     to: customerEmail,
-    subject: `Bank Transfer Details — Order ${orderId}`,
+    subject: isFlashSale
+      ? `⏰ URGENT: Complete Transfer in 5 Min — Order ${orderId}`
+      : `Bank Transfer Details — Order ${orderId}`,
     html: `
       <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
         <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Bank Transfer Details</h1>
@@ -310,7 +328,9 @@ export async function sendBankTransferInstructions({
           Hi ${customerName}, here are the bank details to complete your order.
         </p>
 
-        <div style="background: #faf8f5; padding: 24px; border-radius: 8px;">
+        ${urgencyNote}
+
+        <div style="background: #faf8f5; padding: 24px; border-radius: 8px; margin-top: 24px;">
           <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b6b6b; text-transform: uppercase; letter-spacing: 1px;">Amount Due</p>
           <p style="margin: 0 0 24px 0; font-size: 24px; color: #1a1a1a; font-weight: bold;">₨${total}</p>
 
@@ -327,7 +347,7 @@ export async function sendBankTransferInstructions({
         </div>
 
         <p style="margin-top: 24px; color: #c44536; font-size: 14px; font-weight: bold;">
-          Please complete the transfer within 48 hours and include the order reference.
+          Please complete the transfer within ${deadline} and include the order reference.
         </p>
         <p style="margin-top: 16px; color: #6b6b6b; font-size: 14px;">
           After transferring, reply to this email with your payment screenshot for faster processing.

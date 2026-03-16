@@ -1,6 +1,7 @@
 import { createClient } from "@sanity/client";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImage, Artwork, Collection, Artist, BlogPost } from "@/types";
+import { isArtworkOnSale } from "@/types";
 
 export const sanityClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
@@ -64,6 +65,9 @@ export async function getArtworksByCollection(
       image,
       images,
       featured,
+      salePrice,
+      saleStart,
+      saleDurationHours,
       collection->{
         _id,
         title,
@@ -92,6 +96,9 @@ export async function getArtwork(slug: string): Promise<Artwork | null> {
       image,
       images,
       featured,
+      salePrice,
+      saleStart,
+      saleDurationHours,
       collection->{
         _id,
         title,
@@ -118,6 +125,9 @@ export async function getFeaturedArtworks(): Promise<Artwork[]> {
       status,
       image,
       featured,
+      salePrice,
+      saleStart,
+      saleDurationHours,
       collection->{
         _id,
         title,
@@ -142,6 +152,9 @@ export async function getAllArtworks(): Promise<Artwork[]> {
       status,
       image,
       featured,
+      salePrice,
+      saleStart,
+      saleDurationHours,
       collection->{
         _id,
         title,
@@ -195,6 +208,34 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
   `,
     { slug }
   );
+}
+
+export async function getActiveSales(): Promise<Artwork[]> {
+  const artworks: Artwork[] = await sanityClient.fetch(`
+    *[_type == "artwork" && defined(salePrice) && defined(saleStart) && defined(saleDurationHours) && status in ["available", "reserved", "sold"]] {
+      _id,
+      title,
+      "slug": slug.current,
+      description,
+      medium,
+      dimensions,
+      year,
+      price,
+      currency,
+      status,
+      image,
+      featured,
+      salePrice,
+      saleStart,
+      saleDurationHours,
+      collection->{
+        _id,
+        title,
+        "slug": slug.current
+      }
+    }
+  `);
+  return artworks.filter((a) => isArtworkOnSale(a));
 }
 
 export async function updateArtworkStatus(

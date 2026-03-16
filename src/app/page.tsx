@@ -1,22 +1,25 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Palette } from "lucide-react";
 import { ArtworkGrid } from "@/components/ArtworkGrid";
 import { CollectionCard } from "@/components/CollectionCard";
 import { NewsletterForm } from "@/components/NewsletterForm";
-import { getFeaturedArtworks, getCollections, getArtist } from "@/lib/sanity";
+import { FlashSaleBanner } from "@/components/FlashSaleBanner";
+import { getFeaturedArtworks, getCollections, getActiveSales } from "@/lib/sanity";
+import { getSaleEndTime } from "@/types";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [featuredArtworks, collections, artist] = await Promise.all([
+  const [featuredArtworks, collections, activeSales] = await Promise.all([
     getFeaturedArtworks(),
     getCollections(),
-    getArtist(),
+    getActiveSales(),
   ]);
 
-  const statement =
-    artist?.statement ||
-    "Every painting begins as a conversation with color. I chase the moments between light and shadow, where reality softens and emotion takes form. My work is an invitation to pause and look deeper.";
+  const flashSaleArtwork = activeSales[0] ?? null;
+  const flashSaleEndTime = flashSaleArtwork
+    ? getSaleEndTime(flashSaleArtwork)
+    : null;
 
   return (
     <>
@@ -52,6 +55,14 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Flash Sale */}
+      {flashSaleArtwork && flashSaleEndTime && (
+        <FlashSaleBanner
+          artwork={flashSaleArtwork}
+          saleEndTime={flashSaleEndTime}
+        />
+      )}
 
       {/* Featured Works */}
       {featuredArtworks.length > 0 && (
@@ -111,21 +122,33 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Artist Statement */}
+      {/* Commission */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-soft-black mb-8">
-            From the Studio
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 mb-6">
+            <Palette className="h-7 w-7 text-accent" />
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-soft-black">
+            Commission a Custom Piece
           </h2>
-          <blockquote className="font-serif text-xl sm:text-2xl text-charcoal leading-relaxed italic">
-            &ldquo;{statement}&rdquo;
-          </blockquote>
-          <div className="mt-8">
+          <p className="mt-4 text-gallery-gray leading-relaxed max-w-xl mx-auto">
+            Have a vision for a one-of-a-kind painting? Share your ideas and
+            I&apos;ll bring them to life on canvas — tailored to your space,
+            style, and story.
+          </p>
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link
-              href="/about"
-              className="text-sm font-medium text-accent hover:text-accent-dark transition-colors underline underline-offset-4"
+              href="/commission"
+              className="inline-flex items-center gap-2 rounded-lg bg-soft-black text-white px-8 py-3.5 text-sm font-semibold hover:bg-charcoal transition-colors"
             >
-              Read more about the artist
+              Start Your Commission
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 rounded-lg border border-warm-white px-8 py-3.5 text-sm font-semibold text-soft-black hover:border-accent/50 transition-colors"
+            >
+              Ask a Question
             </Link>
           </div>
         </div>

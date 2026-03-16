@@ -17,6 +17,31 @@ export interface Artwork {
   image: SanityImage;
   images: SanityImage[];
   featured: boolean;
+  salePrice?: number;
+  saleStart?: string;
+  saleDurationHours?: number;
+}
+
+export function isArtworkOnSale(artwork: Artwork): boolean {
+  if (!artwork.salePrice || !artwork.saleStart || !artwork.saleDurationHours) {
+    return false;
+  }
+  const saleEnd =
+    new Date(artwork.saleStart).getTime() +
+    artwork.saleDurationHours * 3600000;
+  return Date.now() < saleEnd;
+}
+
+export function getSaleEndTime(artwork: Artwork): number | null {
+  if (!artwork.saleStart || !artwork.saleDurationHours) return null;
+  return (
+    new Date(artwork.saleStart).getTime() +
+    artwork.saleDurationHours * 3600000
+  );
+}
+
+export function getEffectivePrice(artwork: Artwork): number {
+  return isArtworkOnSale(artwork) ? artwork.salePrice! : artwork.price;
 }
 
 export interface Collection {

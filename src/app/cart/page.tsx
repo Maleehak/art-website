@@ -6,6 +6,7 @@ import { Trash2, ShoppingBag, ArrowLeft, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { isArtworkOnSale, getEffectivePrice } from "@/types";
 import { PlaceholderImage } from "@/components/PlaceholderImage";
 import { urlFor } from "@/lib/sanity";
 
@@ -91,9 +92,20 @@ export default function CartPage() {
                   </p>
                 </div>
                 <div className="flex items-center justify-between mt-4">
-                  <p className="text-lg font-semibold text-soft-black">
-                    {format(item.artwork.price)}
-                  </p>
+                  {isArtworkOnSale(item.artwork) ? (
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-lg font-bold text-red-600">
+                        {format(item.artwork.salePrice!)}
+                      </p>
+                      <p className="text-sm text-gallery-gray line-through">
+                        {format(item.artwork.price)}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-lg font-semibold text-soft-black">
+                      {format(item.artwork.price)}
+                    </p>
+                  )}
                   <button
                     onClick={() => removeItem(item.artwork._id)}
                     className="flex items-center gap-1 text-sm text-gallery-gray hover:text-error transition-colors"

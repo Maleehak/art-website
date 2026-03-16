@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Artwork, CartItem } from "@/types";
+import { getEffectivePrice } from "@/types";
 
 interface CartState {
   items: CartItem[];
@@ -101,7 +102,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const totalItems = state.items.length;
   const totalPrice = state.items.reduce(
-    (sum, item) => sum + item.artwork.price * item.quantity,
+    (sum, item) => sum + getEffectivePrice(item.artwork) * item.quantity,
     0
   );
 

@@ -19,54 +19,98 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate all items are still available before processing
+    interface ValidatedItem {
+      artworkId: string;
+      title: string;
+      price: number;
+      quantity: number;
+      isSale: boolean;
+    }
+    const validatedItems: ValidatedItem[] = [];
+
     for (const item of items) {
       if (item.artworkId) {
         const artwork = await sanityClient.fetch(
-          `*[_type == "artwork" && _id == $id][0]{status, title}`,
+          `*[_type == "artwork" && _id == $id][0]{status, title, price, salePrice, saleStart, saleDurationHours}`,
           { id: item.artworkId }
         );
-        if (artwork && artwork.status !== "available") {
+        if (!artwork) {
+          return NextResponse.json(
+            { error: `Artwork not found: "${item.title}".` },
+            { status: 400 }
+          );
+        }
+        if (artwork.status !== "available") {
           return NextResponse.json(
             {
-              error: `"${artwork.title || item.title}" is no longer available (${artwork.status}). Please remove it from your cart.`,
+              error: `"${artwork.title}" is no longer available (${artwork.status}). Please remove it from your cart.`,
             },
             { status: 400 }
           );
         }
+
+        let serverPrice = artwork.price;
+        let isSale = false;
+
+        if (
+          artwork.salePrice &&
+          artwork.saleStart &&
+          artwork.saleDurationHours
+        ) {
+          const saleEnd =
+            new Date(artwork.saleStart).getTime() +
+            artwork.saleDurationHours * 3600000;
+          if (Date.now() < saleEnd) {
+            serverPrice = artwork.salePrice;
+            isSale = true;
+          } else if (item.isSale) {
+            return NextResponse.json(
+              {
+                error: `The flash sale for "${artwork.title}" has ended. Please refresh the page for the current price.`,
+              },
+              { status: 400 }
+            );
+          }
+        }
+
+        validatedItems.push({
+          artworkId: item.artworkId,
+          title: artwork.title,
+          price: serverPrice,
+          quantity: item.quantity || 1,
+          isSale,
+        });
       }
     }
 
-    const totalAmount = items.reduce(
-      (sum: number, item: { price: number; quantity: number }) =>
-        sum + item.price * item.quantity,
+    const totalAmount = validatedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
       0
     );
 
     const orderId = `BT_${Date.now()}`;
 
-    // Mark all ordered artworks as "reserved" in Sanity
-    for (const item of items) {
-      if (item.artworkId) {
-        try {
-          await sanityClient
-            .patch(item.artworkId)
-            .set({ status: "reserved" })
-            .commit();
-          console.log(`Reserved artwork: ${item.title} (${item.artworkId})`);
-        } catch (err) {
-          console.error(`Failed to reserve ${item.artworkId}:`, err);
-        }
+    for (const item of validatedItems) {
+      try {
+        await sanityClient
+          .patch(item.artworkId)
+          .set({ status: "reserved" })
+          .commit();
+        console.log(`Reserved artwork: ${item.title} (${item.artworkId})`);
+      } catch (err) {
+        console.error(`Failed to reserve ${item.artworkId}:`, err);
       }
     }
 
+    const hasFlashSaleItem = validatedItems.some((i) => i.isSale);
+
     if (process.env.RESEND_API_KEY) {
-      // Send bank details to customer
       const result = await sendBankTransferInstructions({
         customerEmail: email,
         customerName: shippingAddress?.fullName || "Customer",
         orderId,
         total: totalAmount,
+        isFlashSale: hasFlashSaleItem,
       });
 
       if (result.error) {
@@ -75,12 +119,11 @@ export async function POST(request: NextRequest) {
         console.log("Bank transfer email sent to:", email);
       }
 
-      // Notify artist about the new order
       await sendNewOrderArtistNotification({
         customerEmail: email,
         customerName: shippingAddress?.fullName || "Customer",
         orderId,
-        items: items.map((i: { title: string; price: number }) => ({
+        items: validatedItems.map((i) => ({
           title: i.title,
           price: i.price,
         })),

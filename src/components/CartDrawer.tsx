@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { isArtworkOnSale, getEffectivePrice } from "@/types";
 import { PlaceholderImage } from "./PlaceholderImage";
 import { urlFor } from "@/lib/sanity";
 
@@ -90,9 +91,20 @@ export function CartDrawer() {
                           <p className="text-xs text-gallery-gray mt-0.5">
                             {item.artwork.medium}
                           </p>
-                          <p className="text-sm font-medium text-soft-black mt-1">
-                            {format(item.artwork.price)}
-                          </p>
+                          {isArtworkOnSale(item.artwork) ? (
+                            <div className="mt-1 flex items-center gap-2">
+                              <span className="text-sm font-bold text-red-600">
+                                {format(item.artwork.salePrice!)}
+                              </span>
+                              <span className="text-xs text-gallery-gray line-through">
+                                {format(item.artwork.price)}
+                              </span>
+                            </div>
+                          ) : (
+                            <p className="text-sm font-medium text-soft-black mt-1">
+                              {format(item.artwork.price)}
+                            </p>
+                          )}
                         </div>
                         <button
                           onClick={() => removeItem(item.artwork._id)}

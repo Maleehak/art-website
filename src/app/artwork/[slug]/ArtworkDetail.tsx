@@ -6,10 +6,12 @@ import Image from "next/image";
 import { ArrowLeft, ShoppingBag, Check, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Artwork } from "@/types";
+import { isArtworkOnSale, getSaleEndTime } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { ImageZoom } from "@/components/ImageZoom";
 import { PlaceholderImage } from "@/components/PlaceholderImage";
+import { SaleCountdown } from "@/components/SaleCountdown";
 import { urlFor } from "@/lib/sanity";
 
 interface ArtworkDetailProps {
@@ -195,9 +197,28 @@ export function ArtworkDetail({ artwork }: ArtworkDetailProps) {
               </div>
             ) : (
               <div>
-                <p className="text-3xl font-bold text-soft-black">
-                  {format(artwork.price)}
-                </p>
+                {isArtworkOnSale(artwork) ? (
+                  <div>
+                    <div className="flex items-baseline gap-3">
+                      <p className="text-3xl font-bold text-red-600">
+                        {format(artwork.salePrice!)}
+                      </p>
+                      <p className="text-xl text-gallery-gray line-through">
+                        {format(artwork.price)}
+                      </p>
+                      <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                        -{Math.round(((artwork.price - artwork.salePrice!) / artwork.price) * 100)}%
+                      </span>
+                    </div>
+                    <div className="mt-3">
+                      <SaleCountdown endTime={getSaleEndTime(artwork)!} size="md" />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-soft-black">
+                    {format(artwork.price)}
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-gallery-gray">
                   Free shipping on all original paintings
                 </p>

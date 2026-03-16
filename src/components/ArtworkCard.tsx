@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import type { Artwork } from "@/types";
+import { isArtworkOnSale } from "@/types";
 import { useCurrency } from "@/context/CurrencyContext";
 import { PlaceholderImage } from "./PlaceholderImage";
 import { urlFor } from "@/lib/sanity";
@@ -54,6 +55,13 @@ export function ArtworkCard({ artwork, index = 0 }: ArtworkCardProps) {
               </span>
             </div>
           )}
+          {isArtworkOnSale(artwork) && artwork.status === "available" && (
+            <div className="absolute top-3 left-3">
+              <span className="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-sm">
+                Sale
+              </span>
+            </div>
+          )}
         </div>
         <div className="mt-4 space-y-1">
           <h3 className="font-serif text-lg font-medium text-soft-black group-hover:text-accent transition-colors">
@@ -66,6 +74,11 @@ export function ArtworkCard({ artwork, index = 0 }: ArtworkCardProps) {
               <span className="text-sold">Sold</span>
             ) : artwork.status === "reserved" ? (
               <span className="text-accent">Reserved</span>
+            ) : isArtworkOnSale(artwork) ? (
+              <span className="flex items-center gap-2">
+                <span className="text-red-600 font-bold">{format(artwork.salePrice!)}</span>
+                <span className="text-gallery-gray line-through text-sm">{format(artwork.price)}</span>
+              </span>
             ) : (
               format(artwork.price)
             )}

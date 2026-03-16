@@ -117,6 +117,32 @@ export default defineType({
       type: "boolean",
       initialValue: false,
     }),
+    defineField({
+      name: "salePrice",
+      title: "Sale Price",
+      type: "number",
+      description: "Discounted price during the flash sale",
+      validation: (rule) => rule.min(0),
+      group: "sale",
+    }),
+    defineField({
+      name: "saleStart",
+      title: "Sale Start Time",
+      type: "datetime",
+      description: "When the flash sale begins",
+      group: "sale",
+    }),
+    defineField({
+      name: "saleDurationHours",
+      title: "Sale Duration (hours)",
+      type: "number",
+      description: "How long the sale lasts (1-24 hours)",
+      validation: (rule) => rule.min(1).max(24),
+      group: "sale",
+    }),
+  ],
+  groups: [
+    { name: "sale", title: "Flash Sale", default: false },
   ],
   preview: {
     select: {
